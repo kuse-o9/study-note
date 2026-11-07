@@ -1,28 +1,31 @@
-# 無料URLの移行準備
+# Study Noteの無料URL移行
 
-利用者が選択した名前：`study-note`（2026-11-07）。
-現在：`https://kuse-o9.github.io/knowledge-construction/`
-移行先候補：`https://kuse-o9.github.io/study-note/`
+2026-11-08（日本時間）に公開URLを変更。
 
-**まだ切り替えていない。** GitHub連携の利用可能な操作にリポジトリ名変更・作成・Pages設定がないため、GitHub設定画面への本人ログインが必要。SupabaseのAuthのSite URL／Redirect URLsも設定画面で確認・更新する。別ドメインの購入・有料ホスティングは使用しない。
+新URL：https://kuse-o9.github.io/study-note/
+旧URL：https://kuse-o9.github.io/knowledge-construction/
+アプリ本体：https://github.com/kuse-o9/study-note
+旧リンク専用：https://github.com/kuse-o9/knowledge-construction
 
-## 先に済ませたコードの準備
+## 実施したこと
 
-- ゲームの部屋のbaseを固定の旧URLから相対解決へ変更。
-- 山手線・ゆりかもめの戻るリンク、会社別フロア案内の基点を相対URLへ変更。
-- PWAのmanifest／service worker、アカウント画面のメール戻り先は既存の相対URL解決を維持。
-- 名前変更だけで完了とは扱わない。GitHub公式はPagesサイトの旧URLを自動転送の対象外と説明している。
+- 元リポジトリをstudy-noteへ変更。履歴と既存設定を維持。Pagesのmain／root公開を引き継ぎ、公開処理42426436345の成功を確認。
+- 旧名のリポジトリを新規に作り、案内だけのindex.html／404.html／manifestを公開（Pages処理42426594335成功）。アプリ本体を転送ファイルで上書きしていない。
+- 旧リンクのパス・クエリー・フラグメントを同じホストの新パスに渡す。旧ホームに戻った認証パラメーターはaccount.htmlへ渡す。相談内容や認証値を保存・送信・ログ出力しない。
+- PWAのidは移行前と同じ/knowledge-construction/を維持。旧manifestの起動先とscopeは/study-note/へ更新。
+- 固定されたゲーム内リンクと制作計画リンクを新しい基点に変更。git remoteも新しい本体へ変更。今後の本体の更新はstudy-noteへ行う。旧名には転送以外のアプリコードを公開しない。
+- 有料ドメイン、課金機能、外部AIは使用していない。
 
-## 切替の順番
+## 確認
 
-1. 本人ログインでGitHubの管理権限と`study-note`の利用可否を確認。
-2. Supabaseの現在のメール戻り先を控え、移行先の`account.html`をRedirect URLsに追加。既存URLは移行期間中も保持。Site URLの切替は公開に合わせる。
-3. リポジトリを`study-note`へ変更し、Pagesの公開成功、全入口・認証戻り先を確認。
-4. 旧名`knowledge-construction`の転送専用リポジトリを作成し、旧ページのパス・検索・hashを同一ホストの新パスへ渡すindex／404を公開。元アプリへ転送用ファイルを先に上書きしない。
-5. 旧インストール版のmanifest更新を確認。単に新しいURLへ移すだけでは、インストール版の起動先と適用範囲の更新まで保証できない。必要なら新URLから再インストールを案内する。ブラウザーデータは消さない。
-6. Gitのremote・手順書・予定表の参照先を更新。新旧URL・ゲーム戻り先・既存保存データ・メール認証・公開設定を確認して移行完了とする。
+- 新公開URLの主要20ファイルをHTTP取得し、ローカルの公開対象と全件バイト一致。
+- ブラウザーで新ホームとメニュー、旧ホームから新ホーム、旧ゲームの部屋から新ゲームの部屋への転送を確認。単独ゲーム画面から新ホームへ戻れることも確認。旧管理者デッキURLから新URLへ移動し、未ログイン時に本人確認で止まること、本人確認へのリンクが新URLを指すことも確認。
+- 隔離テストで旧ルート／深いリンク／クエリー／フラグメント／認証戻り先／同一オリジン制約／PWA idを検査。認証値は架空のfixtureのみ使用。
 
-公式資料：
-https://docs.github.com/en/repositories/creating-and-managing-repositories/renaming-a-repository
+## 確認範囲の限界
 
-新旧のホスト名は同じであるが、保存・ログイン・インストールの継続は実際の移行で検査する。未検証のまま保証しない。
+既存のSupabase Auth設定は変更していない。新旧でホストは同じで、旧戻り先も転送で残した。実際の確認メール・パスワード再設定メールによる往復と、実アカウントの管理者操作は今回実行していない。実機の既存インストールアプリの自動更新も未確認。起動先が変わらない場合は新URLから再インストールするが、ブラウザーの保存データは消さない。
+
+データベースや利用者の記録は変更していない。物理GPU、実スマホ、3Dの完全復旧を確認したものではない。
+
+公式資料：https://docs.github.com/en/repositories/creating-and-managing-repositories/renaming-a-repository
