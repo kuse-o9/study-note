@@ -6,4 +6,4 @@
 
 検証：実際のCesium 1.117 EntityCollectionを使う36窓の差分検査で、変更通知11264→34回。全窓の切抜きunion・floor・wall・roof・light・色の仕様オブジェクトは一致。例外とネストも検査。既存tunnel-gpu-reuse、scene-diagnostics、recovery-lifecycle、scene-recovery、関連JS構文検査通過。
 
-terrain-wall-clearanceの全路線fixture検査はローカルの圧縮入力でinvalid block typeとなり停止したため、今回は通過扱いにしない。この停止は変更した描画処理の実行前。物理GPUでの復旧・再発防止やVRAM量は未検証で、クラッシュ解消済みとは扱わない。
+terrain-wall-clearanceの初回はローカル圧縮入力が不完全で停止。公開リポジトリのblobハッシュと一致する検査用入力を回収して再実行し、13路線26方向・30558パネルの照合に通過（線路との干渉13146を除外、外側17412を維持）。描画処理を変えて検査を回避したものではない。物理GPUでの復旧・再発防止やVRAM量は未検証で、クラッシュ解消済みとは扱わない。
