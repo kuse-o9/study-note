@@ -1,6 +1,6 @@
 /* Recover failed GPU contexts without reducing scene detail or resolution. */
 (function(g){'use strict';
- const live=new Map();
+ const live=new Map(),ownedContexts=new WeakMap();
  const measurements={version:1,events:[],longTasks:{supported:false,count:0,totalMs:0,maxMs:0},frames:{samples:0,lastRenderedFramesPerSecond:null,primitives:null,entities:null}};
  const stamp=()=>Math.round(g.performance?.now?.()??Date.now());
  function record(type,data={}){measurements.events.push({ms:stamp(),type,...data});if(measurements.events.length>40)measurements.events.shift();}
@@ -25,13 +25,13 @@
    });}catch(next){error=next;}
   }throw error;})().finally(()=>{libraryPending=null;});return libraryPending;
  }
- function release(target){
-  const previous=live.get(target);live.delete(target);
-  // Only a successfully created viewer owns a context. Probing every leftover
-  // canvas here can allocate new contexts during an already failing startup.
-  let gl;try{gl=previous?.scene?.canvas?.getContext('webgl2')||previous?.scene?.canvas?.getContext('webgl');}catch{}
+ function release(target,partialContexts=[]){
+  const previous=live.get(target);live.delete(target);const contexts=new Set([...(ownedContexts.get(previous)||[]),...partialContexts]);
+  // Never probe arbitrary leftover canvases: getContext could allocate a new context.
+  if(previous&&!contexts.size)try{const canvas=previous.scene?.canvas,gl=canvas?.getContext('webgl2')||canvas?.getContext('webgl');if(gl)contexts.add(gl);}catch{}
+  if(previous)ownedContexts.delete(previous);
   try{if(previous&&!previous.isDestroyed())previous.destroy();}catch{}
-  try{gl?.getExtension('WEBGL_lose_context')?.loseContext();}catch{}
+  for(const gl of contexts)try{if(!gl.isContextLost?.())gl.getExtension('WEBGL_lose_context')?.loseContext();}catch{}
   target?.replaceChildren();
  }
  function create(Ces,container,options={}){
@@ -41,14 +41,18 @@
   if(live.has(target))release(target);
   const attempts=['default','high-performance','low-power'];let cause,creationReason='';
   for(let i=0;i<attempts.length;i++){
-   const preference=attempts[i];
+   const preference=attempts[i],attemptContexts=new Set();
    const capture=event=>{creationReason=String(event.statusMessage||'');};target.addEventListener?.('webglcontextcreationerror',capture,true);
    try{
-    const viewer=new Ces.Viewer(container,{scene3DOnly:true,...options,contextOptions:{...options.contextOptions,webgl:{...options.contextOptions?.webgl,powerPreference:preference,failIfMajorPerformanceCaveat:false}}});
+    const contextOptions={...options.contextOptions,webgl:{...options.contextOptions?.webgl,powerPreference:preference,failIfMajorPerformanceCaveat:false}},custom=options.contextOptions?.getWebGLStub;
+    // Cesium 1.117's documented context factory hook records the real native
+    // context at allocation time, including a later constructor failure.
+    contextOptions.getWebGLStub=(canvas,attributes)=>{let gl;if(custom)gl=custom(canvas,attributes);else{if(typeof g.WebGLRenderingContext==='undefined')throw Error('The browser does not support WebGL.');const type=contextOptions.requestWebgl1||typeof g.WebGL2RenderingContext==='undefined'?'webgl':'webgl2';gl=canvas.getContext(type,attributes);}if(!gl)throw Error('The browser supports WebGL, but initialization failed.');attemptContexts.add(gl);return gl;};
+    const viewer=new Ces.Viewer(container,{scene3DOnly:true,...options,contextOptions});ownedContexts.set(viewer,attemptContexts);
     probeResult=null;live.set(target,viewer);target.dataset.rendererAttempt=String(i+1);target.dataset.rendererPreference=preference;
     try{observeViewer(viewer,i+1);}catch{}return viewer;
    }catch(error){
-    release(target);if(!/webgl|context|gpu/i.test(String(error?.message||error)))throw error;cause=creationReason?new Error(String(error?.message||error)+'\n'+creationReason):error;record('viewer-start-failed',{attempt:i+1,browserBlocked:isBlocked(creationReason||error?.message)});if(isBlocked(creationReason||error?.message)){blockedReason=creationReason||String(error.message);break;}
+    release(target,attemptContexts);if(!/webgl|context|gpu/i.test(String(error?.message||error)))throw error;cause=creationReason?new Error(String(error?.message||error)+'\n'+creationReason):error;record('viewer-start-failed',{attempt:i+1,browserBlocked:isBlocked(creationReason||error?.message)});if(isBlocked(creationReason||error?.message)){blockedReason=creationReason||String(error.message);break;}
    }finally{target.removeEventListener?.('webglcontextcreationerror',capture,true);}
   }
   throw Object.assign(new Error('3D描画用のGPU接続を開始できませんでした。保存した運転は残っています。'),{code:'WEBGL_START',cause});

@@ -1,52 +1,23 @@
-Geminiへの再レビュー依頼
+Study Note 最新コード再レビュー用
+# WebGL 再レビュー対応（2026-11-08）
 
-前回はGitHubを読めなかったため、今回は実際のソースをこのテキストに収録しました。自作Study NoteのWebGL白画面・接続喪失を調査しています。費用・画質低下・機能削減・セーブ消去なし。下記の検査記録とコードを読んで、残る問題を重要な順に3件まで指摘してください。仮説と確定事項を分け、ファイル名と該当関数、再現・測定方法、具体的な修正差分を示してください。
+- contextlost では preventDefault・停止フラグ・描画停止のみを即時実行し、保存とダイアログは次のタスクへ分離。重複通知は一度に集約。
+- Cesium 1.117 の Context が使用する getWebGLStub フックで、実際に作成されたネイティブ接続を記録。コンストラクター途中失敗時も所有接続だけを解放。任意キャンバスを getContext で走査しない。このフックはテスト用途として文書化されているため、Cesium 更新時には互換性再検査が必要。
+- 島の一時停止ではレンダラーを破棄せず復旧操作を維持。ページを完全に離れる場合だけ LightShadow.dispose、renderer.dispose、所有GL接続の解放を一度行う。BFCache は除外。
 
-分割後も一部の単一処理が約194〜377ms残ります。これが実機の白画面の原因と確定してはいません。GPU無効の確認環境では実描画・復旧試験ができません。診断JSONは別途提供予定です。
+## 検証
+constructor-context-ownership: 20回の途中失敗×3試行、模擬接続60個すべて解放、同時残存最大1。成功・カスタムfactory・二重解放も検査。
+recovery-lifecycle: 20回の重複イベント、同期停止、次タスクで保存一度、復旧イベントが先に来る場合、破棄済みViewerを検査。
+island-renderer-lifetime: 一時停止と終端破棄の分離、BFCache、二重破棄を検査。
+既存の gpu-blocked-start、scene-recovery、scene-diagnostics、island-gpu-recovery、island-chunk-release、island-owned-release も通過。
 
-共有資源の一律破棄や、preventDefaultでブラウザーブロックを防げるという前提は採用しないでください。
-
-
-===== development/performance/gemini-review-20261108.md =====
-# Gemini提案の実コード照合・追加修正
-
-2026-11-08。Gemini側はGitHubを読めなかったため、提出された文章は一般的な仮説として扱った。実コードと公式資料を照合し、機能・画質・乗客数・保存形式を維持して修正した。課金サービス・AI APIの追加はない。
-
-## 採用と訂正
-
-1. 鉄道はCesium 1.117、こもれび島はThree.jsを使用。CesiumのPrimitiveCollection.removeは既定でdestroyする。Three.jsのmaterial.disposeを鉄道に一律適用しない。
-2. こもれび島のチャンクは共有パレットを使うため、従来のgeometry解放を維持。利用者が建物を解体した場合には、専用geometry・material・textureを解放する。場面内または共有パレットで使用中の資源は解放しない。renderer所有の影バッファを各建物の解放対象にしない。
-3. あずさ・かいじの生成模型を協調的なgeneratorで構築。約6msの処理区切りを目安にsetTimeoutで制御を戻す。非表示タブでもrequestAnimationFrame待ちで永遠に止まらない。従来の同期build APIも残す。
-4. 古い場面の構築は世代番号で中止し、破棄した場面へ模型を追加しない。GPU停止時には生成処理と一時キャッシュを破棄する。
-5. 共通のcontextlost処理は既にpreventDefaultしていた。今回は描画ループの即時停止と重複保存防止、復旧通知を追加。復旧イベントだけで壊れたViewerを自動再開しない。保存後、利用者が再読み込みで作り直す。特急の既存の新規Viewer再構築経路も維持。
-6. preventDefaultは復旧可能性を残す処理であり、GPUブロック回避や復旧成功を保証しない。Disabledという文字だけでGPUドライバーのクラッシュやVRAM枯渇を断定しない。CPUの50ms超処理も、それだけでOSのGPUタイムアウト発動を示さない。
-
-## 診断機能
-
-3Dエラー画面に「診断情報をコピー」を追加。最新40件の開始失敗・喪失・復旧イベント、長いタスクの回数・時間、描画済みフレーム数と模型オブジェクト数、生成模型の構築統計を取得する。
-
-集計はそのページのメモリー内だけで保持し、サーバーへ自動送信・永続保存しない。利用者がボタンを押したときだけJSONをコピー。クリップボードが許可されない環境では読み取り専用のコピー欄を表示する。URL、トークン、メール、アカウント情報、保存データ、エラー本文をJSONへ入れない。オブジェクト数はVRAMのバイト数ではない。要求時描画なので、毎秒描画回数の低さだけで処理落ちと断定しない。
-
-## 検査と限界
-
-- 変更元18ファイルをGitHubの公開元blobと照合。
-- model-timeslicing.test.cjs：あずさ・かいじ各4模型（線路・一般駅・終端配線）のハッシュが修正前の固定値と一致。頂点、色、索引、乗客データを含む。各20回の小模型の構築・破棄、構築中止、同じ模型の重複要求共有を確認。
-- 模擬CPU検査では、あずさ166回、かいじ150回ブラウザー相当のホスト処理へ制御を返した。一方、最長区切りは約377ms／194msで、全Long Taskをなくしたわけではない。単一の重い操作・GC等の追加調査が必要。実機FPSやTDR改善量ではない。
-- island-owned-release.test.cjs：20回の模擬解放で、専用資源を解放し、表示中・共有パレットの資源を維持。
-- island-chunk-release.test.cjs：既存チャンク解放と7×7表示範囲を維持。
-- recovery-lifecycle.test.cjs：20回の重複喪失／描画エラーで一度だけ保存、描画停止、手動復旧、破棄済みViewer無視。
-- scene-diagnostics.test.cjs：診断件数上限、コピー、機密値・URL等を含めないこと。
-- gpu-blocked-start.test.cjs・scene-recovery.test.cjs：ブロック時の無駄な再試行防止、正しいViewerの一度だけ解放、保存順序を確認。
-- 既存scene-start.test.cjsはjsdom依存がこの環境にないため未実行。上記検査を全テスト・実機検査の完了とは扱わない。
-- 確認ブラウザーはGPU無効のため、実機のGPU復旧、VRAM推移、長時間走行での再発防止は未確認。診断を根拠に次を絞り込む。
-
-公式資料：
-https://cesium.com/learn/cesiumjs/ref-doc/PrimitiveCollection.html
-https://threejs.org/manual/pages/how-to-dispose-of-objects.html
-https://registry.khronos.org/webgl/extensions/WEBGL_lose_context/
+## レビューの評価と限界
+preventDefault後のDOM操作でキャンセルが無視される、CPUの長いタスクだけでGPU TDRが必ず起こる、固定の接続上限でDisabledになる、という因果関係は今回の資料では証明されていない。潜在的な所有接続の残留を対策したが、実VRAM漏れを測定したという意味ではない。
+preventDefaultは復旧を許容する操作であり、ドライバー障害やブラウザー側ブロックを必ず防ぐものではない。すべてのコンテキスト喪失の完全防止は保証しない。
+テストは模擬イベント・模擬接続であり、Windows実機GPUでの復元、VRAM推移、長時間運転は未検証。機能・解像度・保存データの仕様は変更していない。有料サービス利用なし。
 
 
-===== shared/rail-asset-store.js =====
+=== shared/rail-asset-store.js ===
 /* Bound temporary model data and loading bursts without changing visible geometry. */
 (function(g){'use strict';
  function create({maxBytes=32*1024*1024,concurrency=2,timeoutMs=25000}={}){
@@ -74,27 +45,28 @@ https://registry.khronos.org/webgl/extensions/WEBGL_lose_context/
 })(globalThis);
 
 
-===== shared/rail-recovery.js =====
-/* Pause and preserve the trip on context loss; use the full error dialog. */
+=== shared/rail-recovery.js ===
+/* Stop drawing immediately; present recovery UI after the context event returns. */
 (function(g){'use strict';
  function watch(viewer,pauseAndSave){
-  let failed=false,button=document.getElementById('rail-retry3d');
+  let failed=false,restored=false,button=document.getElementById('rail-retry3d');
   if(!button){button=document.createElement('button');button.id='rail-retry3d';button.type='button';button.textContent='3Dを再読み込み';button.className='secondary';const status=document.getElementById('scene-status');status?.parentNode.insertBefore(button,status.nextSibling);}
   button.onclick=()=>{pauseAndSave(true);location.reload();};
-  function fail(error){if(failed||viewer.isDestroyed?.())return;failed=true;viewer.useDefaultRenderLoop=false;if(g.BaylineSceneStart?.failure)g.BaylineSceneStart.failure(error||Error('3D描画が停止しました。'),pauseAndSave);else{pauseAndSave(false);const status=document.getElementById('scene-status');if(status){status.textContent='3D描画が停止しました。運転記録を保存しました。「3Dを再読み込み」で復帰できます。';status.style.whiteSpace='normal';}}}
+  function showRestored(){if(viewer.isDestroyed?.())return;const current=document.getElementById('rail-retry3d');if(current)current.textContent='接続が戻りました・3Dを再読み込み';const status=document.getElementById('scene-status');if(status)status.textContent='GPU接続が戻りました。保存した運転を保ち、「3Dを再読み込み」で描画を作り直せます。';}
+  function fail(error){if(failed||viewer.isDestroyed?.())return;failed=true;viewer.useDefaultRenderLoop=false;setTimeout(()=>{if(viewer.isDestroyed?.())return;if(g.BaylineSceneStart?.failure)g.BaylineSceneStart.failure(error||Error('3D描画が停止しました。'),pauseAndSave);else{pauseAndSave(false);const status=document.getElementById('scene-status');if(status){status.textContent='3D描画が停止しました。運転記録を保存しました。「3Dを再読み込み」で復帰できます。';status.style.whiteSpace='normal';}}if(restored)showRestored();},0);}
   viewer.scene.renderError.addEventListener((scene,error)=>fail(error));
   viewer.canvas.addEventListener('webglcontextlost',event=>{event.preventDefault();fail(Object.assign(Error('WebGL2のGPU接続が途中で失われました。'),{code:'WEBGL_START'}));});
-  viewer.canvas.addEventListener('webglcontextrestored',()=>{if(!failed||viewer.isDestroyed?.())return;viewer.useDefaultRenderLoop=false;const current=document.getElementById('rail-retry3d');if(current)current.textContent='接続が戻りました・3Dを再読み込み';const status=document.getElementById('scene-status');if(status)status.textContent='GPU接続が戻りました。保存した運転を保ち、「3Dを再読み込み」で描画を作り直せます。';});
+  viewer.canvas.addEventListener('webglcontextrestored',()=>{if(!failed||viewer.isDestroyed?.())return;restored=true;viewer.useDefaultRenderLoop=false;setTimeout(showRestored,0);});
   return {fail};
  }
  g.BaylineRecovery={watch};
 })(window);
 
 
-===== shared/rail-scene-start.js =====
+=== shared/rail-scene-start.js ===
 /* Recover failed GPU contexts without reducing scene detail or resolution. */
 (function(g){'use strict';
- const live=new Map();
+ const live=new Map(),ownedContexts=new WeakMap();
  const measurements={version:1,events:[],longTasks:{supported:false,count:0,totalMs:0,maxMs:0},frames:{samples:0,lastRenderedFramesPerSecond:null,primitives:null,entities:null}};
  const stamp=()=>Math.round(g.performance?.now?.()??Date.now());
  function record(type,data={}){measurements.events.push({ms:stamp(),type,...data});if(measurements.events.length>40)measurements.events.shift();}
@@ -119,13 +91,13 @@ https://registry.khronos.org/webgl/extensions/WEBGL_lose_context/
    });}catch(next){error=next;}
   }throw error;})().finally(()=>{libraryPending=null;});return libraryPending;
  }
- function release(target){
-  const previous=live.get(target);live.delete(target);
-  // Only a successfully created viewer owns a context. Probing every leftover
-  // canvas here can allocate new contexts during an already failing startup.
-  let gl;try{gl=previous?.scene?.canvas?.getContext('webgl2')||previous?.scene?.canvas?.getContext('webgl');}catch{}
+ function release(target,partialContexts=[]){
+  const previous=live.get(target);live.delete(target);const contexts=new Set([...(ownedContexts.get(previous)||[]),...partialContexts]);
+  // Never probe arbitrary leftover canvases: getContext could allocate a new context.
+  if(previous&&!contexts.size)try{const canvas=previous.scene?.canvas,gl=canvas?.getContext('webgl2')||canvas?.getContext('webgl');if(gl)contexts.add(gl);}catch{}
+  if(previous)ownedContexts.delete(previous);
   try{if(previous&&!previous.isDestroyed())previous.destroy();}catch{}
-  try{gl?.getExtension('WEBGL_lose_context')?.loseContext();}catch{}
+  for(const gl of contexts)try{if(!gl.isContextLost?.())gl.getExtension('WEBGL_lose_context')?.loseContext();}catch{}
   target?.replaceChildren();
  }
  function create(Ces,container,options={}){
@@ -135,14 +107,18 @@ https://registry.khronos.org/webgl/extensions/WEBGL_lose_context/
   if(live.has(target))release(target);
   const attempts=['default','high-performance','low-power'];let cause,creationReason='';
   for(let i=0;i<attempts.length;i++){
-   const preference=attempts[i];
+   const preference=attempts[i],attemptContexts=new Set();
    const capture=event=>{creationReason=String(event.statusMessage||'');};target.addEventListener?.('webglcontextcreationerror',capture,true);
    try{
-    const viewer=new Ces.Viewer(container,{scene3DOnly:true,...options,contextOptions:{...options.contextOptions,webgl:{...options.contextOptions?.webgl,powerPreference:preference,failIfMajorPerformanceCaveat:false}}});
+    const contextOptions={...options.contextOptions,webgl:{...options.contextOptions?.webgl,powerPreference:preference,failIfMajorPerformanceCaveat:false}},custom=options.contextOptions?.getWebGLStub;
+    // Cesium 1.117's documented context factory hook records the real native
+    // context at allocation time, including a later constructor failure.
+    contextOptions.getWebGLStub=(canvas,attributes)=>{let gl;if(custom)gl=custom(canvas,attributes);else{if(typeof g.WebGLRenderingContext==='undefined')throw Error('The browser does not support WebGL.');const type=contextOptions.requestWebgl1||typeof g.WebGL2RenderingContext==='undefined'?'webgl':'webgl2';gl=canvas.getContext(type,attributes);}if(!gl)throw Error('The browser supports WebGL, but initialization failed.');attemptContexts.add(gl);return gl;};
+    const viewer=new Ces.Viewer(container,{scene3DOnly:true,...options,contextOptions});ownedContexts.set(viewer,attemptContexts);
     probeResult=null;live.set(target,viewer);target.dataset.rendererAttempt=String(i+1);target.dataset.rendererPreference=preference;
     try{observeViewer(viewer,i+1);}catch{}return viewer;
    }catch(error){
-    release(target);if(!/webgl|context|gpu/i.test(String(error?.message||error)))throw error;cause=creationReason?new Error(String(error?.message||error)+'\n'+creationReason):error;record('viewer-start-failed',{attempt:i+1,browserBlocked:isBlocked(creationReason||error?.message)});if(isBlocked(creationReason||error?.message)){blockedReason=creationReason||String(error.message);break;}
+    release(target,attemptContexts);if(!/webgl|context|gpu/i.test(String(error?.message||error)))throw error;cause=creationReason?new Error(String(error?.message||error)+'\n'+creationReason):error;record('viewer-start-failed',{attempt:i+1,browserBlocked:isBlocked(creationReason||error?.message)});if(isBlocked(creationReason||error?.message)){blockedReason=creationReason||String(error.message);break;}
    }finally{target.removeEventListener?.('webglcontextcreationerror',capture,true);}
   }
   throw Object.assign(new Error('3D描画用のGPU接続を開始できませんでした。保存した運転は残っています。'),{code:'WEBGL_START',cause});
@@ -170,7 +146,7 @@ https://registry.khronos.org/webgl/extensions/WEBGL_lose_context/
 })(window);
 
 
-===== shared/rail-loader.js =====
+=== shared/rail-loader.js ===
 /* Retain exact original mesh packets; share the corrected scene/driver code. */
 (async()=>{'use strict';const options=JSON.parse(document.currentScript.dataset.route),status=document.getElementById('loading'),retry=document.getElementById('retry-loading');
  let busy=false;
@@ -198,13 +174,13 @@ https://registry.khronos.org/webgl/extensions/WEBGL_lose_context/
  if(html.includes(readingMarker))html=html.replace(readingMarker,"let spoken=text;if(language.startsWith('ja'))spoken=spoken.replace(/([0-9０-９一二三四五六七八九十百]+)号車/g,'$1ごうしゃ');if(language.startsWith('ja'))for(const [name,reading]of Object.entries(readings)");
  const marker='<script>/* BAYLINE shared signal model',a=html.indexOf(marker);if(a<0)throw Error('共通処理の版を確認できませんでした。');const b=html.indexOf('</script>',a);html=html.slice(0,a)+'<script src="shared/rail-scene-shared.js?v=terrain7"></script>'+html.slice(b+9);
  const last=html.lastIndexOf('<script>'),end=html.indexOf('</script>',last);if(last<0||!html.slice(last,end).includes('function modelGeometry'))throw Error('運転処理の版を確認できませんでした。');
- html=html.slice(0,last)+'<script src="shared/rail-scene-start.js?v=diagnostics2"></script><script src="shared/rail-asset-store.js?v=bounded1"></script><script src="shared/rail-mesh-cache.js"></script><script src="shared/rail-recovery.js?v=diagnostics2"></script><script src="'+options.driver+'?v=bounded1"></script>'+html.slice(end+9);
+ html=html.slice(0,last)+'<script src="shared/rail-scene-start.js?v=lifecycle3"></script><script src="shared/rail-asset-store.js?v=bounded1"></script><script src="shared/rail-mesh-cache.js"></script><script src="shared/rail-recovery.js?v=lifecycle3"></script><script src="'+options.driver+'?v=bounded1"></script>'+html.slice(end+9);
  document.open();document.write(html);document.close();
  }catch(error){status.textContent=(error.message||'読み込めませんでした。')+' 下のボタンから再試行できます。';status.setAttribute('role','alert');retry.hidden=false;}finally{busy=false;retry.disabled=false;}}
  retry.onclick=()=>void load();await load();})();
 
 
-===== rail-games/priority/batch-001/games/model-builder.js =====
+=== rail-games/priority/batch-001/games/model-builder.js ===
 /* On-demand meshes for the retained game's chunk/window renderer.
  * The layout is a development approximation; station-specific surveys and rail
  * elevations must pass the release gates before these become a public game.
@@ -334,7 +310,7 @@ root.BaylineBatchModels={initialize,build,buildAsync,cancelPending(){buildEpoch+
 })(window);
 
 
-===== rail-games/priority/batch-001/games/rail.js =====
+=== rail-games/priority/batch-001/games/rail.js ===
 'use strict';
 (()=>{
 const D=window.RAIL_DATA,C=window.RailCore,$=id=>document.getElementById(id),KEY='bayline-'+D.id+'-v1';
@@ -472,7 +448,7 @@ addEventListener('keydown',e=>{if(e.target.matches('input,select,textarea')||$('
 function formationFor(key){return window.RAIL_DATA.train.formations[key]||window.RAIL_DATA.train.formation;}
 
 
-===== game/index.html =====
+=== game/index.html ===
 <!doctype html>
 <html lang="ja">
 <head>
@@ -832,16 +808,20 @@ function formationFor(key){return window.RAIL_DATA.train.formations[key]||window
 
     document.querySelector('#mapbtn').addEventListener('click',()=>document.querySelector('#mapPanel').classList.toggle('open'));
     document.querySelector('#helpbtn').addEventListener('click',()=>document.querySelector('#help').classList.add('open'));document.querySelector('#closehelp').addEventListener('click',()=>document.querySelector('#help').classList.remove('open'));document.querySelector('#backbtn').addEventListener('click',()=>{const bridge=window.parent!==window?window.parent.GameSaveBridge:window.GameSaveBridge;if(bridge?.goHome)bridge.goHome();else location.href='../index.html#game-room';});
-    let gpuStopped=false,gpuWasActive=false;
+    let gpuStopped=false,gpuWasActive=false,islandRendererDisposed=false;
     function pauseIslandGraphics(reason){
       if(gpuStopped)return;gpuWasActive=active;gpuStopped=true;active=false;keys.clear();let saved=false;
       if(!saveBlocked&&!resetting){try{localStorage.setItem(SAVE_KEY,JSON.stringify(snapshot()));saved=true;}catch{}void persist(snapshot()).catch(()=>{});}
-      let panel=document.getElementById('island-gpu-error');if(!panel){panel=document.createElement('dialog');panel.id='island-gpu-error';Object.assign(panel.style,{maxWidth:'min(600px,94vw)',maxHeight:'85vh',overflow:'auto',padding:'24px',borderRadius:'16px'});const h=document.createElement('h2');h.textContent='3D接続の確認';const body=document.createElement('p');body.id='island-gpu-message';const detail=document.createElement('p');detail.id='island-gpu-detail';const restart=document.createElement('button');restart.textContent='保存した島を再読み込み';restart.onclick=()=>location.reload();const resume=document.createElement('button');resume.id='island-gpu-resume';resume.textContent='復旧した3Dで続ける';resume.hidden=true;resume.onclick=()=>{if(renderer.getContext().isContextLost())return;gpuStopped=false;active=gpuWasActive;clock.getDelta();panel.close();};panel.addEventListener('cancel',e=>e.preventDefault());panel.append(h,body,detail,restart,resume);document.body.append(panel);}
+      let panel=document.getElementById('island-gpu-error');if(!panel){panel=document.createElement('dialog');panel.id='island-gpu-error';Object.assign(panel.style,{maxWidth:'min(600px,94vw)',maxHeight:'85vh',overflow:'auto',padding:'24px',borderRadius:'16px'});const h=document.createElement('h2');h.textContent='3D接続の確認';const body=document.createElement('p');body.id='island-gpu-message';const detail=document.createElement('p');detail.id='island-gpu-detail';const restart=document.createElement('button');restart.textContent='保存した島を再読み込み';restart.onclick=()=>location.reload();const resume=document.createElement('button');resume.id='island-gpu-resume';resume.textContent='復旧した3Dで続ける';resume.hidden=true;resume.onclick=()=>{if(islandRendererDisposed){location.reload();return;}if(renderer.getContext().isContextLost())return;gpuStopped=false;active=gpuWasActive;clock.getDelta();panel.close();};panel.addEventListener('cancel',e=>e.preventDefault());panel.append(h,body,detail,restart,resume);document.body.append(panel);}
       document.getElementById('island-gpu-message').textContent=(saved?'島の状態をこの端末に保存しました。':'この端末への保存は確認できません。直前の保存を保護しています。')+' Chromeは chrome://settings/system、Edgeは edge://settings/system でグラフィック アクセラレーションを確認し、ブラウザーを再起動してください。ほかの3Dタブを閉じると改善する場合もあります。';
       document.getElementById('island-gpu-detail').textContent=String(reason||'GPU接続が失われました。');document.getElementById('island-gpu-resume').hidden=true;if(!panel.open)panel.showModal();
     }
     renderer.domElement.addEventListener('webglcontextlost',e=>{e.preventDefault();pauseIslandGraphics('WebGLの接続が途中で失われました。');});
-    renderer.domElement.addEventListener('webglcontextrestored',()=>{const b=document.getElementById('island-gpu-resume');if(b)b.hidden=false;});
+    renderer.domElement.addEventListener('webglcontextrestored',()=>{if(islandRendererDisposed)return;const b=document.getElementById('island-gpu-resume');if(b)b.hidden=false;});
+    // A temporary loss keeps the renderer restorable. Only terminal page exit
+    // destroys renderer-owned shadow targets and the already-owned GL context.
+    function releaseIslandRenderer(event){if(event?.persisted||islandRendererDisposed)return;islandRendererDisposed=true;gpuStopped=true;active=false;keys.clear();let gl;try{gl=renderer.getContext();}catch{}try{sun.shadow.dispose();}catch{}try{renderer.dispose();}catch{}try{if(gl&&!gl.isContextLost())gl.getExtension('WEBGL_lose_context')?.loseContext();}catch{}}
+    globalThis.addEventListener?.('pagehide',releaseIslandRenderer);
     function animate(){
       requestAnimationFrame(animate);if(gpuStopped){clock.getDelta();return;}const dt=Math.min(clock.getDelta(),.04),now=performance.now();
       const turn=(keys.has('d')||keys.has('arrowright')||keys.has('right')?1:0)-(keys.has('a')||keys.has('arrowleft')?1:0);
