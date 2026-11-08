@@ -3,7 +3,8 @@
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict'),path=require('node:path');
 const {parseHTML}=require(process.env.LINKEDOM_MODULE||'linkedom');
 const root=path.resolve(__dirname,'../..'),source=fs.readFileSync(path.join(root,'study-navigation.js'),'utf8');
-const files=fs.readdirSync(root).filter(p=>p.endsWith('.html')&&fs.readFileSync(path.join(root,p),'utf8').includes('study-design.css?v=20261107'));
+const files=fs.readdirSync(root).filter(p=>p.endsWith('.html')&&fs.readFileSync(path.join(root,p),'utf8').includes('study-design.css?v='));
+assert.ok(files.length>0,'study pages must be discovered independently of the stylesheet version');
 for(const file of files){
  const html=fs.readFileSync(path.join(root,file),'utf8'),{window}=parseHTML(html),doc=window.document;
  const header=doc.querySelector('body > header');if(!header?.querySelector('nav'))continue;
