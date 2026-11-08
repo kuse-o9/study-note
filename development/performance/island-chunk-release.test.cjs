@@ -1,0 +1,10 @@
+'use strict';
+const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict'),path=require('node:path');
+const html=fs.readFileSync(path.resolve(__dirname,'../../game/index.html'),'utf8');
+const declaration=html.split('\n').find(s=>s.includes('function releaseChunkGeometry(objects)'));assert(declaration);
+let freed=0,materialDisposed=0;const material={dispose(){materialDisposed++;}},geo=()=>({dispose(){freed++;}}),first=geo(),second=geo();const root=nodes=>({traverse(fn){nodes.forEach(fn);}});const removedA=root([{geometry:first,material},{geometry:second,material}]),removedB=root([{geometry:first,material}]);const liveGeometry=geo(),visible=root([{geometry:liveGeometry,material}]);
+const context={};vm.runInNewContext(declaration,context);context.releaseChunkGeometry([removedA,removedB]);assert.equal(freed,2,'only two retired geometry buffers, including duplicates, are released');assert.equal(materialDisposed,0,'shared materials remain usable by visible objects');
+const tail=html.match(/for\(const \[ck,data\]of loadedChunks\)[^\n]+/)[0].slice(0,-1);const removed=[],loadedChunks=new Map([['visible',{objects:[visible]}],['retired',{objects:[removedA,removedB]}]]),resources=[{chunk:'visible'},{chunk:'retired'}],collidables=[{mesh:visible},{mesh:removedA}];
+Object.assign(context,{loadedChunks,keep:new Set(['visible']),world:{remove:o=>removed.push(o)},resources,collidables});freed=0;vm.runInNewContext(tail,context);assert.deepEqual(removed,[removedA,removedB]);assert.equal(freed,2);assert.equal(materialDisposed,0);assert.equal(loadedChunks.size,1);assert.equal(resources.length,1);assert.equal(collidables.length,1);assert.equal(resources[0].chunk,'visible');assert.equal(collidables[0].mesh,visible);
+assert(html.includes('for(let cx=pcx-3;cx<=pcx+3;cx++)for(let cz=pcz-3;cz<=pcz+3;cz++)'),'visible chunk range retained');
+console.log('PASS: actual island chunk unload releases retired geometry once, retains visible models and shared materials, and keeps 7x7 visible chunk range. No physical VRAM measurement.');
