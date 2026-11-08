@@ -210,6 +210,16 @@ g.RailTraffic={presets,create,step,playerGap,wrap};
  */
 (function(g){'use strict';
 let active=null;
+// Only the dedicated comparison links opt into these temporary diagnostic modes.
+let diagnosticMode='normal',diagnosticActive=false;
+try{const value=new URLSearchParams(g.location?.search||'').get('railGpuTest');if(['normal','no-clipping','no-terrain-entities'].includes(value)){diagnosticMode=value;diagnosticActive=true;}}catch{}
+function comparisonBanner(){
+ if(!diagnosticActive||!g.document?.createElement||g.document.getElementById('rail-gpu-comparison'))return;
+ const panel=g.document.createElement('aside');panel.id='rail-gpu-comparison';panel.setAttribute('role','status');
+ Object.assign(panel.style,{position:'fixed',bottom:'12px',left:'12px',zIndex:'2147482999',maxWidth:'min(580px,calc(100vw - 24px))',padding:'12px',background:'#fff3cc',color:'#252c3d',border:'2px solid #a36a00',borderRadius:'12px',font:'14px/1.6 system-ui'});
+ const text=g.document.createElement('span');text.textContent='描画の比較テスト：'+({'normal':'通常の描画','no-clipping':'地形切り抜きのGPU処理なし（地形が線路を覆う場合があります）','no-terrain-entities':'床・壁・照明の描画なし（穴や暗い場所が見える場合があります）'}[diagnosticMode])+'。通常版の設定は変更していません。';
+ const button=g.document.createElement('button');button.type='button';button.textContent='通常版に戻る';button.onclick=()=>{const url=new URL(g.location.href);url.searchParams.delete('railGpuTest');g.location.assign(url.href);};panel.append(text,button);g.document.body.append(panel);
+}
 function offset(geo,d){
  const c=geo.cumulative,a=geo.route.trackOffsets||[];let lo=0,hi=c.length-1;
  while(lo+1<hi){const m=(lo+hi)>>1;if(c[m]<=d)lo=m;else hi=m;}
@@ -325,12 +335,12 @@ function chunkIndex(segments,frame,step,C){
  }};
 }
 function setup(viewer,C,geos,frame){
- if(active)dispose();
+ if(active)dispose();comparisonBanner();
  const segments=Object.entries(geos).flatMap(([key,geo])=>rangesCached(geo).map(r=>({...r,key,geo})));
  const supported=!!C.ClippingPolygonCollection?.isSupported(viewer.scene);
  if(!supported){active={viewer,C,segments,frame,entities:new Map(),supported:false};return {supported:false,segments:segments.length};}
  // One owned collection at a time; replace only at a window boundary.
- const collection=new C.ClippingPolygonCollection({enabled:false});viewer.scene.globe.clippingPolygons=collection;
+ const collection=new C.ClippingPolygonCollection({enabled:false});if(diagnosticMode!=='no-clipping')viewer.scene.globe.clippingPolygons=collection;
  viewer.scene.screenSpaceCameraController.enableCollisionDetection=false;
  active={viewer,C,segments,geos,frame,collection,maskChunks:chunkIndex(segments,frame,160,C),tunnelChunks:chunkIndex(segments,frame,12,C),clearance:clearanceIndex(geos,frame),entities:new Map(),supported:true,last:null};
  return {supported:true,segments:segments.length,polygons:0};
@@ -347,7 +357,7 @@ function renderWindow(player){
  const own=a.segments.find(r=>r.key===player.direction&&player.distance>=r.start-700&&player.distance<=r.end+700),line=a.geos[player.direction];
  const cell=(own?'tunnel:':'surface:')+player.direction+':'+Math.floor(player.distance/120);if(cell===a.last)return;a.last=cell;
  const wanted=new Set();
- const retain=(key,spec)=>{wanted.add(key);if(!a.entities.has(key))a.entities.set(key,a.viewer.entities.add(spec));};
+ const retain=(key,spec)=>{if(diagnosticMode==='no-terrain-entities')return;wanted.add(key);if(!a.entities.has(key))a.entities.set(key,a.viewer.entities.add(spec));};
  const prune=()=>{for(const [key,e] of a.entities)if(!wanted.has(key)){a.viewer.entities.remove(e);a.entities.delete(key);}};
  // The collection and its GPU textures stay owned until dispose().
  const surfacePolygons=[];
@@ -410,8 +420,8 @@ function model(m){
  return {...m,groups:m.groups.filter(x=>!['#515d64','#606a70'].includes(x.color))};
 }
 function canRender(geo,d){return active?.supported!==false||!near(geo,d,200);}
-function dispose(){if(!active)return;for(const e of active.entities.values())active.viewer.entities.remove(e);if(active.collection&&active.viewer.scene.globe.clippingPolygons===active.collection)active.viewer.scene.globe.clippingPolygons=undefined;active=null;}
-g.BaylineTunnels={offset,ranges,near,setup,render,model,dispose,canRender,simplifyBoundary,retainingRise,floorCuts,segmentGap2,clearanceIndex,get clearance(){return active?.clearance;},get maskStats(){return active?.maskStats;}};
+function dispose(){if(!active)return;for(const e of active.entities.values())active.viewer.entities.remove(e);if(active.collection&&active.viewer.scene.globe.clippingPolygons===active.collection)active.viewer.scene.globe.clippingPolygons=undefined;else if(active.collection&&!active.collection.isDestroyed?.())active.collection.destroy?.();active=null;}
+g.BaylineTunnels={diagnosticMode,offset,ranges,near,setup,render,model,dispose,canRender,simplifyBoundary,retainingRise,floorCuts,segmentGap2,clearanceIndex,get clearance(){return active?.clearance;},get maskStats(){return active?.maskStats;}};
 })(typeof globalThis==='object'?globalThis:window);
 
 

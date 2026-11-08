@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>3D描画の比較テスト | Study Note</title><style>
+:root{font-family:system-ui,-apple-system,sans-serif;color:#172741;background:#eef3f9;line-height:1.8}*{box-sizing:border-box}body{margin:0}main{max-width:880px;margin:48px auto;padding:0 22px}a{color:#204ea4}h1{font-size:clamp(26px,5vw,38px);line-height:1.4}p{margin:12px 0}.intro,.steps{color:#43546b}.card{background:#fff;border:1px solid #d4deec;border-radius:18px;padding:24px;margin:20px 0;box-shadow:0 6px 22px #19355308}label{font-weight:700;display:block}select{font:inherit;width:100%;padding:12px;border-radius:10px;border:1px solid #aebed4;background:#fff;color:inherit;margin-top:8px}.choices{display:grid;gap:12px;margin-top:20px}button{font:inherit;text-align:left;cursor:pointer;border:1px solid #bccde6;border-radius:12px;padding:16px 20px;background:#f5f8ff;color:#183968}button strong{display:block;font-size:18px}button span{display:block;font-size:14px;color:#43546b}button:hover{background:#eaf1ff;border-color:#446cab}button:focus-visible,select:focus-visible{outline:3px solid #0c66d6;outline-offset:3px}.notice{background:#fff7df;border:1px solid #e7cd86;border-radius:12px;padding:16px}footer{font-size:14px;color:#526078;margin:28px 0}@media(max-width:600px){main{margin:24px auto}.card{padding:18px}}
+</style></head><body><main>
+<a href="index.html#game-room">← ゲームの部屋へ</a>
+<h1>3D描画の比較テスト</h1>
+<p class="intro">接続が切れる処理を絞るための専用画面です。通常版の機能・画質は変更しません。テストの種類は保存せず、この起動だけに適用します。</p>
+<div class="notice">「Web page caused context loss and was blocked」が出ている間は比較できません。ほかの3Dタブを閉じ、ブラウザーを再起動してから始めてください。組織の制限を変更する必要はありません。</div>
+<section class="card"><label for="route">同じ路線・同じ開始位置で比較する</label>
+<select id="route"><option value="sobu">総武線快速</option><option value="azusa">あずさ</option><option value="kaiji">かいじ</option><option value="yamanote">山手線</option><option value="chuo">中央線快速</option><option value="chuo-local">中央・総武線各駅停車</option><option value="keihin">京浜東北・根岸線</option><option value="railway">ゆりかもめ</option></select>
+<div class="choices">
+<button type="button" data-mode="normal"><strong>① 通常の描画</strong><span>比較の基準。切り抜き・床・壁・照明をすべて描画します。</span></button>
+<button type="button" data-mode="no-clipping"><strong>② 地形切り抜きのGPU処理なし</strong><span>床・壁・照明は維持します。地形が線路やホームを覆う場合があります。</span></button>
+<button type="button" data-mode="no-terrain-entities"><strong>③ 床・壁・照明の描画なし</strong><span>地形切り抜きは維持します。床の穴や壁・照明のない場所が見える場合があります。</span></button>
+</div></section>
+<section class="card"><h2>確認すること</h2><ol class="steps"><li>同じ路線・同じ開始位置で、まず②を1回試します。新しいタブは開きません。</li><li>画面に黄色の「描画の比較テスト」が表示されていることを確認します。</li><li>起動して60秒ほど待ち、接続が切れるか確認します。余裕があれば同じ条件で③も比較します。</li><li>エラーが出たら「診断情報をコピー」で記録します。ブラウザーにブロックされたら、そのまま別テストを続けないでください。</li></ol><p>一度成功しても原因確定とは扱いません。通常版にはゲーム画面の「通常版に戻る」から戻れます。</p></section>
+<footer>保存データを削除せず、既存の運転記録を使います。運転中の保存は通常どおり行われるため、開始位置をそろえて比較してください。この画面はAIや有料サービスを呼び出しません。</footer>
+</main><script>
+'use strict';
+const routes={sobu:'sobu.html',azusa:'rail-games/priority/batch-001/games/azusa.html',kaiji:'rail-games/priority/batch-001/games/kaiji.html',yamanote:'yamanote/index.html',chuo:'chuo.html','chuo-local':'chuo-local.html',keihin:'keihin.html',railway:'railway/index.html'};
+for(const button of document.querySelectorAll('[data-mode]'))button.addEventListener('click',()=>{const route=routes[document.getElementById('route').value],mode=button.dataset.mode;if(!route||!['normal','no-clipping','no-terrain-entities'].includes(mode))return;button.disabled=true;const url=new URL(route,location.href);url.searchParams.set('railGpuTest',mode);location.assign(url.href);});
+</script></body></html>
