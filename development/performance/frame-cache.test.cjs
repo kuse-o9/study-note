@@ -3,13 +3,13 @@ const fs=require('fs'),vm=require('vm'),z=require('zlib'),assert=require('assert
 const root=path.resolve(__dirname,'../..'),C=require(process.env.CESIUM_MODULE||path.resolve(root,'../work/cesium-runtime/node_modules/cesium'));
 const read=p=>fs.readFileSync(path.join(root,p),'utf8'),packet=n=>JSON.parse(z.gunzipSync(fs.readFileSync(path.join(root,'rail-games/priority/batch-001/games/'+n+'.json.gz'))));
 const after=read('rail-games/priority/batch-001/games/model-builder.js');
-const before=after.replace(' const frames=new Map();\n','').replace('if(frames.has(d))return frames.get(d);','').replace('const result={center,forward,left,up};frames.set(d,result);return result;','return {center,forward,left,up};');
+const before=after.replace('cache=root.BaylineAssetStore.create()','cache=new Map()').replace(' const frames=new Map();\n','').replace('if(frames.has(d))return frames.get(d);','').replace('const result={center,forward,left,up};frames.set(d,result);return result;','return {center,forward,left,up};');
 const reports=[];
 for(const line of ['azusa','kaiji']){
  const outputs=[];
  for(const source of [before,after]){
   const ctx=vm.createContext({Cesium:C,atob,btoa,console});ctx.window=ctx;ctx.pointCalls=0;
-  for(const p of ['rail-games/priority/batch-001/engine/rail-core.js','shared/rail-tunnel-runtime.js'])vm.runInContext(read(p),ctx);
+  for(const p of ['shared/rail-asset-store.js','rail-games/priority/batch-001/engine/rail-core.js','shared/rail-tunnel-runtime.js'])vm.runInContext(read(p),ctx);
   vm.runInContext(source.replace('function point(d){','function point(d){pointCalls++;'),ctx);
   ctx.BaylineBatchModels.initialize(packet(line).data,packet('common'),packet('e353'));
   const m=ctx.RAIL_PREBUILT_MODELS;

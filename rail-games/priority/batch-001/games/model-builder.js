@@ -3,7 +3,7 @@
  * elevations must pass the release gates before these become a public game.
  */
 (function(root){'use strict';
-let data,common,stock,geos,clearance,cache=new Map();
+let data,common,stock,geos,clearance,cache=root.BaylineAssetStore.create();
 function stationOuterTrackOffset(meta,start,end,d){
  const join=meta.islandOuterTrackJoin??(meta.side>0?0:12),t=Math.max(0,Math.min(1,Math.min((d-start)/100,(end-d)/100)));
  return join+(7.56-join)*t*t*(3-2*t);
