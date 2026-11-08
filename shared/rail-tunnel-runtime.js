@@ -128,7 +128,14 @@ function setup(viewer,C,geos,frame){
  active={viewer,C,segments,geos,frame,collection,maskChunks:chunkIndex(segments,frame,160,C),tunnelChunks:chunkIndex(segments,frame,12,C),clearance:clearanceIndex(geos,frame),entities:new Map(),supported:true,last:null};
  return {supported:true,segments:segments.length,polygons:0};
 }
+// EntityCollection emits a change event for every add/remove unless suspended.
+// Keep every polygon/wall/light, but notify Cesium once per window update.
 function render(player){
+ const entities=active?.viewer?.entities,batched=typeof entities?.suspendEvents==='function'&&typeof entities?.resumeEvents==='function';
+ if(batched)entities.suspendEvents();
+ try{return renderWindow(player);}finally{if(batched)entities.resumeEvents();}
+}
+function renderWindow(player){
  const a=active;if(!a?.supported)return;
  const own=a.segments.find(r=>r.key===player.direction&&player.distance>=r.start-700&&player.distance<=r.end+700),line=a.geos[player.direction];
  const cell=(own?'tunnel:':'surface:')+player.direction+':'+Math.floor(player.distance/120);if(cell===a.last)return;a.last=cell;
