@@ -8,3 +8,7 @@
 
 /* Selected camera tabs have a light surface: keep their labels dark, including cab layouts. */
 .sn-rail .view-tabs button[aria-pressed="true"],.sn-rail.cab-app .view-tabs button[aria-pressed="true"]{background:#eef6ef;color:#173c2d;font-weight:750;text-shadow:none}
+
+/* Clear labels and action targets; no changes to 3D render quality. */
+.sn-game-lobby .train-link,.sn-depot .trainlink{line-height:1.6}.sn-game-lobby :is(.play,.back),.sn-depot :is(button,.trainlink){min-height:44px}.sn-game-lobby :is(.train-link,.island-card):focus-within{outline:3px solid #61895c;outline-offset:3px}.sn-rail #scene-status{font-size:12px;line-height:1.6;max-width:100%;text-align:left}.sn-rail:not(.cab-app) .action-grid button,.sn-rail:not(.cab-app) .segmented button{font-size:13px;min-height:42px}.sn-rail .view-tabs button{min-height:36px;font-size:12px}.sn-rail.cab-app :is(.lcd-button,.softkey-grid button,.segmented button){font-size:12px}.sn-rail :is(dialog,select,button){max-width:100%}.sn-rail dialog :is(p,label,button,select){line-height:1.6}.sn-rail dialog :is(button,select){min-height:44px}.sn-editor :is(button,.button):focus-visible{outline:3px solid #d4bc63;outline-offset:3px}
+@media(max-width:700px){.sn-rail #scene-status{font-size:12px;max-width:calc(100vw - 28px)}.sn-rail .view-tabs{flex-wrap:wrap;gap:5px}.sn-rail:not(.cab-app) .action-grid button{min-height:44px}.sn-depot .trainlink{padding:12px;font-size:14px}}

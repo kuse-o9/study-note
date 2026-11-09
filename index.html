@@ -94,7 +94,7 @@ footer{font-size:14px;color:#627188;margin-top:24px}
   .cover{height:110px}
 }
 </style>
-<link rel="stylesheet" href="study-access.css"><script src="study-access.js"></script><link rel="stylesheet" href="study-tools.css?v=1"><link rel="stylesheet" href="study-design.css?v=20261108menu"><script defer src="study-navigation.js?v=20261107c"></script></head>
+<link rel="stylesheet" href="study-access.css"><script src="study-access.js"></script><link rel="stylesheet" href="study-tools.css?v=1"><link rel="stylesheet" href="study-design.css?v=20261110ui"><script defer src="study-navigation.js?v=20261110ui"></script></head>
 
 <body class="sn-app sn-home">
 <header>
@@ -116,7 +116,7 @@ footer{font-size:14px;color:#627188;margin-top:24px}
 </header>
 
 <main>
-<section class="sn-welcome" aria-labelledby="welcome-title"><div><div class="eyebrow">MY STUDY SPACE</div><h1 id="welcome-title">今日も、自分のペースで。</h1><p>まずは１問から。学びたいことを選んで始めよう。</p></div><svg class="sn-welcome-art" viewBox="0 0 180 140" aria-hidden="true"><circle cx="94" cy="70" r="59" fill="#dce9fc"/><rect x="36" y="31" width="74" height="94" rx="10" fill="#7c9cda" transform="rotate(-12 36 31)"/><rect x="66" y="16" width="75" height="99" rx="10" fill="#fff" stroke="#bad0ef"/><path d="M81 40h44M81 55h44M81 70h29" stroke="#88a7d5" stroke-width="5" stroke-linecap="round"/><path d="m121 91 9 9 22-25" fill="none" stroke="#509e86" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/><circle cx="30" cy="22" r="5" fill="#e6bb69"/><circle cx="156" cy="36" r="4" fill="#a2bde9"/></svg></section>
+<section class="sn-welcome" aria-labelledby="welcome-title"><div><div class="eyebrow">今日の学習</div><h1 id="welcome-title">今日も、自分のペースで。</h1><p>まずは１問から。学びたいことを選んで始めよう。</p><div class="sn-home-actions"><a class="btn primary" href="decks.html">問題を解く <span aria-hidden="true">→</span></a><a class="btn" href="my-decks.html">自分のデッキを開く</a></div></div><svg class="sn-welcome-art" viewBox="0 0 180 140" aria-hidden="true"><circle cx="94" cy="70" r="59" fill="#dce9fc"/><rect x="36" y="31" width="74" height="94" rx="10" fill="#7c9cda" transform="rotate(-12 36 31)"/><rect x="66" y="16" width="75" height="99" rx="10" fill="#fff" stroke="#bad0ef"/><path d="M81 40h44M81 55h44M81 70h29" stroke="#88a7d5" stroke-width="5" stroke-linecap="round"/><path d="m121 91 9 9 22-25" fill="none" stroke="#509e86" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/><circle cx="30" cy="22" r="5" fill="#e6bb69"/><circle cx="156" cy="36" r="4" fill="#a2bde9"/></svg></section>
 <div class="sn-section-title"><h2>学習をはじめる</h2><p>問題は、選んだ部屋の中で表示します。</p></div>
 <div class="sn-learning-grid">
 <section class="sn-learning-card sn-featured"><span class="sn-tile-icon" aria-hidden="true">▤</span><h3>デッキで学ぶ</h3><p>教科や単元から問題を選んで、書く・覚える・復習する。</p><a class="btn primary" href="decks.html">デッキを選ぶ <span aria-hidden="true">→</span></a><a class="sn-sub-link" href="my-decks.html">自分のデッキを作る・編集する</a></section>
@@ -130,14 +130,14 @@ footer{font-size:14px;color:#627188;margin-top:24px}
 <a class="sn-quick-link" href="timer.html" target="_blank" rel="noopener"><span class="sn-quick-symbol" aria-hidden="true">◷</span><span>学習タイマー ↗<small>別タブで集中をサポート</small></span></a>
 <a class="sn-quick-link" href="notices.html"><span class="sn-quick-symbol" aria-hidden="true">♧</span><span>お知らせ<small>Study Noteからのご案内</small></span></a>
 </div>
-<footer class="sn-home-footer"><span>ひとつずつ、できることを増やそう。</span><a href="feedback.html">ご意見・困ったことを送る →</a></footer>
+<section class="sn-break-section" aria-labelledby="break-title"><div class="sn-section-title"><h2 id="break-title">休憩・ものづくり</h2><p>学習の合間に、気分を切り替えよう。</p></div><div class="sn-break-grid"><a class="sn-break-link" href="#game-room"><span class="sn-break-icon" aria-hidden="true">♧</span><span><strong>ゲームの部屋</strong><small>鉄道ゲーム・こもれび島を選ぶ</small></span><span aria-hidden="true">→</span></a><a class="sn-break-link" href="editor/index.html"><span class="sn-break-icon" aria-hidden="true">▷</span><span><strong>動画編集</strong><small>素材を並べて、作品をつくる</small></span><span aria-hidden="true">→</span></a></div></section><footer class="sn-home-footer"><span>ひとつずつ、できることを増やそう。</span><a href="feedback.html">ご意見・困ったことを送る →</a></footer>
 </main>
 <script src="home-study-route.js?v=1"></script>
 <div id="study-game-room-overlay" hidden style="position:fixed;inset:0;z-index:10000;background:#f5f3ed"><iframe id="study-game-room-frame" title="ゲームの部屋" style="display:block;width:100%;height:100%;border:0"></iframe></div>
 <script>
-(()=>{'use strict';const button=document.getElementById('game-room-launch'),overlay=document.getElementById('study-game-room-overlay'),frame=document.getElementById('study-game-room-frame');let oldOverflow='';
-function closeRoom(){if(overlay.hidden)return;overlay.hidden=true;document.body.style.overflow=oldOverflow;frame.removeAttribute('src');frame.removeAttribute('srcdoc');if(location.hash==='#game-room')history.replaceState(null,'',location.pathname+location.search+'#home');button.focus();}
-button.addEventListener('click',e=>{e.preventDefault();if(!overlay.hidden)return;oldOverflow=document.body.style.overflow;frame.removeAttribute('srcdoc');frame.src=new URL('game-room/embedded-room.html?v=readable1',location.href).href;overlay.hidden=false;document.body.style.overflow='hidden';frame.focus();});
+(()=>{'use strict';const button=document.getElementById('game-room-launch'),overlay=document.getElementById('study-game-room-overlay'),frame=document.getElementById('study-game-room-frame');let oldOverflow='',returnFocus=null;
+function closeRoom(){if(overlay.hidden)return;overlay.hidden=true;document.body.style.overflow=oldOverflow;frame.removeAttribute('src');frame.removeAttribute('srcdoc');if(location.hash==='#game-room')history.replaceState(null,'',location.pathname+location.search+'#home');const focusTarget=returnFocus?.isConnected&&returnFocus.getClientRects().length?returnFocus:document.querySelector('.sn-home-actions a')||button;focusTarget.focus();}
+button.addEventListener('click',e=>{e.preventDefault();if(!overlay.hidden)return;returnFocus=document.activeElement;oldOverflow=document.body.style.overflow;frame.removeAttribute('srcdoc');frame.src=new URL('game-room/embedded-room.html?v=readable1',location.href).href;overlay.hidden=false;document.body.style.overflow='hidden';frame.focus();});
 window.addEventListener('message',e=>{if(e.source===frame.contentWindow&&e.origin===location.origin&&e.data?.type==='study-game-room-close')closeRoom();});
 window.addEventListener('keydown',e=>{if(e.key==='Escape')closeRoom();});
 function syncRoomRoute(){if(location.hash==='#game-room')button.click();else closeRoom();}

@@ -11,7 +11,7 @@ for(const file of files){
  const ids=[...doc.querySelectorAll('main [id]')].map(n=>n.id),main=doc.querySelector('main'),game=doc.getElementById('game-room-launch');let gameClicks=0;game?.addEventListener('click',()=>gameClicks++);
  const href='https://example.test/study/'+file;const context={document:doc,location:{href},URL,console};
  vm.runInNewContext(source,context);
- assert.ok(doc.querySelector('.sn-navigation'),file);assert.equal(doc.querySelectorAll('.sn-brand').length,1,file);
+ assert.ok(doc.querySelector('.sn-navigation'),file);const toggle=doc.querySelector('.sn-nav-toggle');assert.ok(toggle,file+' mobile menu button');assert.equal(toggle.getAttribute('aria-controls'),doc.querySelector('.sn-navigation').id);assert.equal(toggle.getAttribute('aria-expanded'),'false');toggle.dispatchEvent(new window.Event('click'));assert.equal(toggle.getAttribute('aria-expanded'),'true');toggle.dispatchEvent(new window.Event('click'));assert.equal(toggle.getAttribute('aria-expanded'),'false');assert.equal(doc.querySelectorAll('.sn-brand').length,1,file);
  for(const id of ids)assert.ok(doc.getElementById(id),file+' retains '+id);
  assert.equal(doc.querySelector('main'),main,'forms/main are not replaced');
  const link=doc.querySelector('.sn-navigation a[href="decks.html"]');assert.ok(link);

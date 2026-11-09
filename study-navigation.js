@@ -10,9 +10,10 @@
  function match(href){const desired=new URL(href,current);return originals.find(a=>{if(claimed.has(a))return false;const u=new URL(a.getAttribute('href'),current);return u.pathname===desired.pathname&&(u.hash===desired.hash||(desired.pathname.endsWith('index.html')&&!desired.hash&&u.hash==='#home'));});}
  function link(label,href,tone='study',kind=tone){let a=match(href);if(a)claimed.add(a);else{a=document.createElement('a');a.href=href;}a.classList.add('sn-nav-link');a.setAttribute('aria-label',label);a.dataset.tone=tone;a.replaceChildren(icon(kind),document.createTextNode(label));const u=new URL(a.href,current);if((u.pathname.split('/').pop()||'index.html')===page&&(!u.hash||u.hash===current.hash)&&a.id!=='game-room-launch')a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');return a;}
  const bar=document.createElement('div');bar.className='sn-header-inner';const brand=header.querySelector('.brand')||document.createElement('a');brand.className='brand sn-brand';brand.href='index.html';brand.innerHTML='<span class="sn-brand-mark" aria-hidden="true">S</span><span>Study <b>Note</b><small>学びを、自分のペースで。</small></span>';
- const nav=document.createElement('nav');nav.className='sn-navigation';nav.setAttribute('aria-label','メインメニュー');
+ const nav=document.createElement('nav');nav.className='sn-navigation';nav.id='sn-primary-navigation';nav.setAttribute('aria-label','メインメニュー');
  nav.append(link('ホーム','index.html','home'));
  const definitions=[['学ぶ','study',[['デッキ','decks.html'],['自分のデッキ','my-decks.html'],['練習デッキ','practice.html'],['暗記ノート','memory.html'],['暗記シート','practice.html#memory-math'],['学習タイマー','timer.html']]],['記録','records',[['カレンダー・成長グラフ','journal.html'],['ポイント・アイテム','points.html']]],['交流','community',[['勉強の掲示板','board.html'],['勉強チャット','chat.html'],['協力ミッション','teams.html'],['お知らせ','notices.html'],['管理者のつぶやき','staff-updates.html']]],['つくる・遊ぶ','creative',[['ゲーム',page==='index.html'||page==='practice.html'?'#game-room':'index.html#game-room'],['動画編集','editor/index.html']]]];
+ const toggle=document.createElement('button');toggle.type='button';toggle.className='sn-nav-toggle';toggle.setAttribute('aria-controls',nav.id);toggle.setAttribute('aria-expanded','false');toggle.append(icon('more'),document.createTextNode('メニュー'));toggle.addEventListener('click',()=>{toggle.setAttribute('aria-expanded',String(toggle.getAttribute('aria-expanded')!=='true'));});
  const menus=[];
  function group(title,tone,entries){const details=document.createElement('details');details.className='sn-nav-menu';details.dataset.tone=tone;const summary=document.createElement('summary');summary.append(icon(tone),document.createTextNode(title));const panel=document.createElement('div');panel.className='sn-menu-panel';for(const [label,href]of entries)panel.append(link(label,href,tone));if(panel.querySelector('[aria-current="page"]'))details.classList.add('sn-current-group');details.append(summary,panel);details.addEventListener('toggle',()=>{if(details.open)for(const other of menus)if(other!==details)other.open=false;});menus.push(details);nav.append(details);return panel;}
  for(const definition of definitions)group(...definition);
@@ -20,10 +21,10 @@
  const extras=group('管理・ヘルプ','admin',[['管理者ページ','admin.html'],['フィードバック','feedback.html']]);if(/^admin(?:-|\.html)/.test(page))extras.closest('details').classList.add('sn-current-group');
  // Keep page-specific links and nodes (including IDs/listeners) rather than discarding them.
  for(const a of originals)if(!claimed.has(a)){const u=new URL(a.href,current);const duplicate=[...nav.querySelectorAll('a')].some(b=>b!==a&&b.href===u.href);if(duplicate&&!a.id)continue;a.classList.add('sn-nav-link');extras.append(a);}
- nav.addEventListener('click',e=>{if(e.target.closest('a'))for(const menu of menus)menu.open=false;});
- header.classList.add('sn-header');bar.append(brand,nav);header.replaceChildren(bar);
+ nav.addEventListener('click',e=>{if(e.target.closest('a')){for(const menu of menus)menu.open=false;toggle.setAttribute('aria-expanded','false');}});
+ header.classList.add('sn-header');bar.append(brand,toggle,nav);header.replaceChildren(bar);
  const main=document.querySelector('main');if(main){if(!main.id)main.id='sn-main';const skip=document.createElement('a');skip.className='sn-skip';skip.href='#'+main.id;skip.textContent='本文へ移動';header.prepend(skip);}
- document.addEventListener('click',e=>{if(!header.contains(e.target))for(const menu of menus)menu.open=false;});
- document.addEventListener('keydown',e=>{if(e.key==='Escape'){const menu=menus.find(x=>x.open);if(menu){menu.open=false;menu.querySelector('summary').focus();}}});
+ document.addEventListener('click',e=>{if(!header.contains(e.target)){for(const menu of menus)menu.open=false;toggle.setAttribute('aria-expanded','false');}});
+ document.addEventListener('keydown',e=>{if(e.key==='Escape'){const menu=menus.find(x=>x.open);if(menu){menu.open=false;menu.querySelector('summary').focus();}else if(toggle.getAttribute('aria-expanded')==='true'){toggle.setAttribute('aria-expanded','false');toggle.focus();}}});
  document.body.classList.add('sn-ready');
 })();
