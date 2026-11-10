@@ -1,6 +1,6 @@
-import{cameraSegments}from'./studio-cameras.js?v=20261111proxy';
-import{trimClip}from'./studio-math.js?v=20261111proxy';
-import{sourceOffset,speedAt}from'./studio-math.js?v=20261111proxy';
+import{cameraSegments}from'./studio-cameras.js?v=20261111proxy2';
+import{trimClip}from'./studio-math.js?v=20261111proxy2';
+import{sourceOffset,speedAt}from'./studio-math.js?v=20261111proxy2';
 const delay=()=>new Promise(r=>setTimeout(r,0));
 export async function exportFrames(api,{format='webm',fps=30,onProgress=()=>{},cancelled=()=>false}={}){
  const {assets,clips,canvas}=api.get(),duration=Math.max(0,...clips.map(c=>c.start+c.duration));
@@ -10,7 +10,9 @@ export async function exportFrames(api,{format='webm',fps=30,onProgress=()=>{},c
  const mb=await import('./vendor/mediabunny-1.65.2.mjs'),codec=format==='mp4'?'avc':'vp9',audioCodec=format==='mp4'?'aac':'opus';
  const bitrate=Math.round(12000000*canvas.width*canvas.height/(1920*1080));
  if(!await mb.canEncodeVideo(codec,{width:canvas.width,height:canvas.height,bitrate}))throw Error('この端末では指定サイズ・形式の映像を書き出せません。解像度または形式を選び直してください。');
- const sounding=clips.filter(c=>c.asset&&assets.find(a=>a.id===c.asset)?.kind!=='image'&&c.volume>0).flatMap(c=>cameraSegments(c,clips).map(([a,b])=>trimClip(c,a,b)));
+ const candidates=clips.filter(c=>c.asset&&assets.find(a=>a.id===c.asset)?.kind!=='image'&&c.volume>0).flatMap(c=>cameraSegments(c,clips).map(([a,b])=>trimClip(c,a,b))),presence=new Map();
+ for(const c of candidates){if(presence.has(c.asset))continue;if(cancelled())throw Error('中止しました。');const a=assets.find(a=>a.id===c.asset);if(!a.file)throw Error('元の素材をもう一度接続してください。');const input=new mb.Input({formats:mb.ALL_FORMATS,source:new mb.BlobSource(a.file)});try{presence.set(c.asset,!!await input.getPrimaryAudioTrack());}catch{throw Error(a.name+' の音声トラックを確認できません。音声を省略せず中止しました。');}finally{input.dispose();}}
+ const sounding=candidates.filter(c=>presence.get(c.asset));
  if(sounding.length&&!await mb.canEncodeAudio(audioCodec,{numberOfChannels:2,sampleRate:48000}))throw Error('この端末では選択形式の音声を書き出せません。WebMを選び直してください。');
  const target=new mb.BufferTarget(),output=new mb.Output({format:format==='mp4'?new mb.Mp4OutputFormat():new mb.WebMOutputFormat(),target});let finalized=false;
  const video=new mb.CanvasSource(canvas,{codec,bitrate});output.addVideoTrack(video,{frameRate:fps});let sound;if(sounding.length){sound=new mb.AudioBufferSource({codec:audioCodec,bitrate:192000});output.addAudioTrack(sound);}

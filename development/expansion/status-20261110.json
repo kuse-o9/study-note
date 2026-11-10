@@ -30,7 +30,8 @@
     "batchCameraChecks": 18,
     "batchBrowser": "Two one-second camera sources imported/reconnected from a saved JSON project,1920x1080 and1080x1920 VP9+48kHz stereoOpus exported together; ZIP CRC validated; selected cameraB green pixel39,173,112 and audio440Hz→880Hz verified.",
     "proxyChecks": 12,
-    "proxyBrowser": "Generated320x180 VP9/Opus proxy, connected an intentionally different green preview, then exported1920x1080 original cameraA [69,69,151] and cameraB [39,173,112]; preview never replaced original output."
+    "proxyBrowser": "Generated320x180 VP9/Opus proxy, connected an intentionally different green preview, then exported1920x1080 original cameraA [69,69,151] and cameraB [39,173,112]; preview never replaced original output.",
+    "silentVideoBrowser": "1920x1080 VP9 only,1.000 seconds,no invented audio track; genuine audio parse failures still fail explicitly."
   },
   "releaseCommit": "f5fa0c375d4440169d50200ede335caff3392cf8",
   "counsel": "Private human consultation and supreme-owner role revocation deployed; real authorization tests passed with all test changes rolled back; no actual account roles changed.",
