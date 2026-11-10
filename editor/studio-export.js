@@ -1,6 +1,6 @@
-import{cameraSegments}from'./studio-cameras.js?v=20261110batch';
-import{trimClip}from'./studio-math.js?v=20261110batch';
-import{sourceOffset,speedAt}from'./studio-math.js?v=20261110batch';
+import{cameraSegments}from'./studio-cameras.js?v=20261111proxy';
+import{trimClip}from'./studio-math.js?v=20261111proxy';
+import{sourceOffset,speedAt}from'./studio-math.js?v=20261111proxy';
 const delay=()=>new Promise(r=>setTimeout(r,0));
 export async function exportFrames(api,{format='webm',fps=30,onProgress=()=>{},cancelled=()=>false}={}){
  const {assets,clips,canvas}=api.get(),duration=Math.max(0,...clips.map(c=>c.start+c.duration));

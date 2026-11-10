@@ -1,4 +1,4 @@
-import {animated,validateAdvanced,sourceOffset} from './studio-math.js?v=20261110batch';
+import {animated,validateAdvanced,sourceOffset} from './studio-math.js?v=20261111proxy';
 export function parseSRT(text){const blocks=text.replace(/^\uFEFF/,'').replace(/\r/g,'').trim().split(/\n\s*\n/),result=[];const seconds=s=>{const m=s.match(/^(\d{2,}):(\d{2}):(\d{2})[,.](\d{3})$/);if(!m||+m[2]>59||+m[3]>59)throw Error('字幕の時刻が正しくありません。');return +m[1]*3600+ +m[2]*60+ +m[3]+ +m[4]/1000;};for(const block of blocks){const lines=block.split('\n');if(/^\d+$/.test(lines[0]))lines.shift();const match=lines.shift()?.match(/^(\S+)\s+-->\s+(\S+)$/);if(!match)throw Error('SRT字幕の形式を確認してください。');const start=seconds(match[1]),finish=seconds(match[2]),text=lines.join('\n');if(finish<=start||!text||text.length>1000)throw Error('字幕の長さを確認してください。');result.push({start,duration:finish-start,text});if(result.length>5000)throw Error('字幕は5000件以内にしてください。');}return result;}
 export function writeSRT(clips){const stamp=t=>{const ms=Math.round(t*1000),h=Math.floor(ms/3600000),m=Math.floor(ms/60000)%60,s=Math.floor(ms/1000)%60;return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')},${String(ms%1000).padStart(3,'0')}`;};return clips.filter(c=>c.track==='text').sort((a,b)=>a.start-b.start).map((c,i)=>`${i+1}\n${stamp(c.start)} --> ${stamp(c.start+c.duration)}\n${c.text}\n`).join('\n');}
 export function clipAppearance(c,time){
@@ -19,6 +19,7 @@ export function parseProject(text){
  const assets=new Map(),ids=new Set();
  for(const a of d.assets){
   if(!a||!id(a.id)||assets.has(a.id)||typeof a.name!=='string'||a.name.length>1000||!['video','audio','image'].includes(a.kind)||!Number.isFinite(a.duration)||a.duration<=0||a.duration>86400)fail();
+  if(a.proxyName!==undefined&&(typeof a.proxyName!=='string'||a.proxyName.length>1000))fail();
   if(a.folder!==undefined&&(typeof a.folder!=='string'||a.folder.length>80))fail();
   assets.set(a.id,a);
  }
