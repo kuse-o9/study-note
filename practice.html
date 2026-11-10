@@ -94,7 +94,7 @@ footer{font-size:14px;color:#627188;margin-top:24px}
   .cover{height:110px}
 }
 </style>
-<link rel="stylesheet" href="study-access.css"><script src="study-access.js"></script><link rel="stylesheet" href="study-tools.css?v=1"><link rel="stylesheet" href="study-design.css?v=20261110ui"><script defer src="study-navigation.js?v=20261110apps"></script><link rel="stylesheet" href="app-controls.css?v=20261110apps"><script src="app-controls.js?v=20261110apps2"></script></head>
+<link rel="stylesheet" href="study-access.css"><script src="study-access.js"></script><link rel="stylesheet" href="study-tools.css?v=1"><link rel="stylesheet" href="study-design.css?v=20261110ui"><script defer src="study-navigation.js?v=20261110counsel"></script><link rel="stylesheet" href="app-controls.css?v=20261110apps"><script src="app-controls.js?v=20261110auth"></script><link rel="stylesheet" href="study-expansion.css?v=20261110learn"><script src="review-schedule.js?v=review1"></script><script src="answer-compare.js?v=20261110learn"></script><script src="answer-practice.js?v=20261110learn"></script><script defer src="study-five-minutes.js?v=20261110learn"></script><link rel="stylesheet" href="auth-support.css?v=20261110auth"><link rel="stylesheet" href="study-language.css?v=20261110language"><script defer src="study-language.js?v=20261110language"></script></head>
 
 <body class="sn-app">
 <header>
@@ -441,6 +441,13 @@ let active = null;
 const canvas = $('canvas');
 const ctx = canvas.getContext('2d');
 const notes = new Map();
+let reviewQueue=null,gradingActor='';
+const gradingAnswers={math:['x=5','x=6','x=5'],fractions:['5/6','15/8','7/12'],geometry:['20cm2','26cm','x=125°']};
+const practiceQuestion=i=>({id:String(i),prompt:pack.questions[i].q,answer:gradingAnswers[pack.id]?.[i]||pack.questions[i].answer});
+const grading=window.StudyAnswerPractice?.({mount:$('study-screen'),onReview:(mode,matches)=>{reviewQueue=mode==='all'?null:pack.questions.flatMap((q,i)=>matches(practiceQuestion(i))?[i]:[]);if(reviewQueue&&!reviewQueue.length){$('note-status').textContent='この条件で復習する問題はありません。';reviewQueue=null;return;}saveNote();index=reviewQueue?.[0]??0;showQuestion();}});
+function updateGrading(){gradingActor=window.StudyApps?.state?.user_id||'guest';grading?.setQuestion(practiceQuestion(index),gradingActor+':practice:'+pack.id);}
+window.addEventListener('study-app-policy',()=>{if(gradingActor!==(window.StudyApps?.state?.user_id||'guest'))updateGrading();});
+
 
 // 保存領域を読み書きする
 function read(key) {
@@ -614,6 +621,7 @@ function endStroke() {
 // 問題を表示する
 function showQuestion() {
   const q = pack.questions[index];
+  updateGrading();
 
   $('study-title').textContent = pack.title;
   $('pack-label').textContent = 'デッキ · ' + pack.subject;
@@ -641,8 +649,9 @@ function showQuestion() {
 
   $('hint').open = false;
   $('solution').open = false;
-  $('prev').disabled = index === 0;
-  $('next').disabled = index === pack.questions.length - 1;
+  const queue=reviewQueue||pack.questions.map((q,i)=>i),position=queue.indexOf(index);
+  $('prev').disabled=position<=0;$('next').disabled=position>=queue.length-1;
+  $('number').textContent='問題 '+(position+1)+' / '+queue.length+(reviewQueue?'（復習）':'');
 
   loadNote();
 }
@@ -694,7 +703,7 @@ function route() {
   const chosen = packs.find(p => p.id === parts[1]) || packs[0];
 
   if (chosen.id !== pack.id) {
-    pack = chosen;
+    pack = chosen;reviewQueue=null;
     index = 0;
   }
 
@@ -798,8 +807,8 @@ for (const [name, delta] of [['prev', -1], ['next', 1]]) {
   $(name).onclick = () => {
     endStroke();
 
-    const next = index + delta;
-    if (next < 0 || next >= pack.questions.length) return;
+    const queue=reviewQueue||pack.questions.map((q,i)=>i),next=queue[queue.indexOf(index)+delta];
+    if(next===undefined)return;
 
     saveNote();
     index = next;
@@ -880,5 +889,5 @@ window.addEventListener('hashchange',syncRoomRoute);
 syncRoomRoute();
 })();
 </script>
-<script src="config.js"></script><script src="game-publication.js?v=20261110apps"></script><script src="config.js"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.102.0"></script><script src="study-client.js?v=deadline1"></script><script src="study-comfort.js?v=20261110apps"></script><script src="install-app.js?v=1"></script><script src="feedback-updates.js?v=1"></script></body>
+<script src="config.js"></script><script src="game-publication.js?v=20261110apps"></script><script src="config.js"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.102.0"></script><script src="study-client.js?v=20261110auth"></script><script src="study-comfort.js?v=20261110apps"></script><script src="install-app.js?v=1"></script><script src="feedback-updates.js?v=1"></script></body>
 </html>

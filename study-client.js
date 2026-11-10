@@ -7,7 +7,13 @@
  const storageKey='sb-'+new URL(cfg.supabaseUrl).hostname.split('.')[0]+'-auth-token';
  try{const old=window.sessionStorage.getItem(storageKey);if(old && !window.localStorage.getItem(storageKey))window.localStorage.setItem(storageKey,old);window.sessionStorage.removeItem(storageKey);}catch{window.Study={setupError:'ログイン状態を保存できません。ブラウザーのサイトデータ保存を許可してください。'};return;}
  const client=window.supabase.createClient(cfg.supabaseUrl,cfg.publishableKey,{auth:{storage:window.localStorage,storageKey,flowType:'implicit',persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
+
+ const authRoot=new URL('.',document.currentScript.src);let authSupportPromise;
+ function authSupport(){if(window.StudyAuthSupport)return Promise.resolve(window.StudyAuthSupport);if(authSupportPromise)return authSupportPromise;authSupportPromise=new Promise((resolve,reject)=>{const script=document.createElement('script'),timer=setTimeout(()=>reject(new Error('認証補助の読み込みが時間切れです。')),15000);script.src=new URL('auth-support.js?v=20261110auth',authRoot);script.onload=()=>{clearTimeout(timer);window.StudyAuthSupport?resolve(window.StudyAuthSupport):reject(new Error('認証補助を確認できません。'));};script.onerror=()=>{clearTimeout(timer);authSupportPromise=null;reject(new Error('認証補助を読み込めません。'));};document.head.append(script);});return authSupportPromise;}
+ for(const method of ['signInWithPassword','signUp','signInWithOtp','resend','resetPasswordForEmail']){const original=client.auth[method].bind(client.auth);client.auth[method]=async(...args)=>{const token=await(await authSupport()).challenge();if(token){if(method==='resetPasswordForEmail')args[1]={...args[1],captchaToken:token};else args[0]={...args[0],options:{...args[0]?.options,captchaToken:token}};}return original(...args);};}
+ if(location.pathname.endsWith('/account.html'))void authSupport().catch(()=>{});
  async function request(body, suffix='') {
+  if(!(body instanceof FormData)&&['admin_verify','admin_password_set','account_self_delete'].includes(body.action)){const token=await(await authSupport()).challenge();if(token)body={...body,input:{...body.input,captchaToken:token}};}
   const {data,error}=await client.auth.getSession();
   if(error) fail('ログインし直してください。');
   const headers={apikey:cfg.publishableKey};

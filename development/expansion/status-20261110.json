@@ -1,0 +1,29 @@
+{
+  "published": false,
+  "freeOnly": true,
+  "implemented": [
+    "Google provider readiness and optional Turnstile token integration; external keys not configured",
+    "short-answer deterministic comparison and wrong/due review",
+    "visible-time notebook five-minute mode",
+    "on-device browser translation selector and RTL when supported; not full reviewed localization",
+    "editor folders/search, independent media instances and extra lanes, trim/slip/groups, keyframes/rate curves, freeform masks, SDR color nodes/curves/LUT, VTT, local drafts, microphone recording, frame export up to120s",
+    "private human counseling with verified staff pledge and per-reply secrecy confirmation"
+  ],
+  "remaining": [
+    "Google/Supabase OAuth client credentials and actual account linking test",
+    "Turnstile public sitekey/secret server setup and real challenge test",
+    "fully reviewed translations for all specified languages and browsers",
+    "arbitrary handwritten image transcription/grading without AI is not implemented",
+    "editor proxy/pro-codec support, full multicam/nesting, stabilization/tracking/3D/particles, full node compositor/HDR, surround, collaboration/cloud sync and batch export"
+  ],
+  "validation": {
+    "learning": "7 compare cases plus actor isolation and hidden-time timing",
+    "editorMath": 12,
+    "editorExistingChecks": 35,
+    "edgeCaptcha": 21,
+    "edgeFeedbackSession": 27,
+    "counselLocal": 25,
+    "counselProductionRollback": "PASS; no remaining test accounts or consultations",
+    "browser": "Actual2s local video imported, edited, saved/reopened and1920x1080 VP9/Opus export checked byffprobe; autosave restore prompt verified; human counseling required checkboxes and mock reply verified. Real Google/CAPTCHA and full8K/HDR untested."
+  }
+}

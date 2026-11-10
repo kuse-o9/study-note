@@ -1,0 +1,38 @@
+begin;
+do $test$
+declare who uuid:=gen_random_uuid();other_user uuid:=gen_random_uuid();us uuid:=gen_random_uuid();os uuid:=gen_random_uuid();root uuid;rs uuid:=gen_random_uuid();rev bigint;tid uuid:=gen_random_uuid();mid uuid:=gen_random_uuid();rid uuid:=gen_random_uuid();r jsonb;denied boolean;
+begin
+ insert into auth.users(id,email,email_confirmed_at)values(who,'counsel-test-'||who||'@example.invalid',now()),(other_user,'counsel-test-'||other_user||'@example.invalid',now());
+ select owner_id into root from study_private.settings where singleton;
+ select revision into rev from study_private.admin_password_settings where singleton and password_hash is not null;
+ insert into auth.sessions(id,user_id,not_after)values(us,who,now()+interval '1 hour'),(os,other_user,now()+interval '1 hour'),(rs,root,now()+interval '1 hour');
+ perform set_config('request.jwt.claims',jsonb_build_object('sub',who,'session_id',us,'role','authenticated')::text,true);perform set_config('request.jwt.claim.sub',who::text,true);
+ set local role authenticated;
+ perform public.study_counsel('create',jsonb_build_object('id',tid,'message_id',mid,'title','検査用','body','破棄される検査データ','consent',true));
+ r:=public.study_counsel('get',jsonb_build_object('id',tid));if jsonb_array_length(r->'messages')<>1 then raise exception 'Own read failed';end if;
+ reset role;
+ perform set_config('request.jwt.claims',jsonb_build_object('sub',other_user,'session_id',os,'role','authenticated')::text,true);perform set_config('request.jwt.claim.sub',other_user::text,true);
+ set local role authenticated;
+ denied:=false;begin perform public.study_counsel('get',jsonb_build_object('id',tid));exception when insufficient_privilege then denied:=true;end;if not denied then raise exception 'Unrelated account read';end if;
+ denied:=false;begin perform public.study_counsel('list','{"staff":true}');exception when insufficient_privilege then denied:=true;end;if not denied then raise exception 'Role spoof';end if;
+ reset role;
+ perform set_config('request.jwt.claims',jsonb_build_object('sub',root,'session_id',rs,'role','authenticated')::text,true);perform set_config('request.jwt.claim.sub',root::text,true);
+ set local role authenticated;
+ denied:=false;begin perform public.study_counsel('pledge','{"staff":true,"accept":true,"version":1}');exception when insufficient_privilege then denied:=true;end;if not denied then raise exception 'Password gate bypass';end if;
+ reset role;
+ insert into study_private.admin_verified_sessions(actor,session_id,password_revision,expires_at)values(root,rs,rev,now()+interval '5 minutes');
+ set local role authenticated;
+ denied:=false;begin perform public.study_counsel('get',jsonb_build_object('staff',true,'id',tid));exception when insufficient_privilege then denied:=true;end;if not denied then raise exception 'Pledge gate bypass';end if;
+ perform public.study_counsel('pledge','{"staff":true,"accept":true,"version":1}');
+ denied:=false;begin perform public.study_counsel('reply',jsonb_build_object('staff',true,'id',tid,'message_id',rid,'revision',1,'body','検査用回答'));exception when insufficient_privilege then denied:=true;end;if not denied then raise exception 'Reply checkbox bypass';end if;
+ perform public.study_counsel('reply',jsonb_build_object('staff',true,'id',tid,'message_id',rid,'revision',1,'body','検査用回答','accept',true,'version',1));
+ reset role;
+ perform set_config('request.jwt.claims',jsonb_build_object('sub',who,'session_id',us,'role','authenticated')::text,true);perform set_config('request.jwt.claim.sub',who::text,true);
+ set local role authenticated;
+ r:=public.study_counsel('get',jsonb_build_object('id',tid));if jsonb_array_length(r->'messages')<>2 or r->>'state'<>'answered'then raise exception 'Reply read failed';end if;
+ reset role;
+ if has_table_privilege('authenticated','study_private.counsel_messages','select')or has_function_privilege('anon','public.study_counsel(text,jsonb)','execute')then raise exception 'Unexpected direct access';end if;
+ reset role;
+end $test$;
+select 'PASS: own account and verified admin reply; unrelated account, fake role, missing password receipt, missing pledge and missing reply checkbox rejected. All test data rolled back.'result;
+rollback;

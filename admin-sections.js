@@ -46,6 +46,7 @@
   group('教材・申請・アカウント',Object.values(views).filter(x=>!x.owner||info.owner));
   group('交流とコンテンツ',[
    {title:'通知の作成・承認',description:'管理者用・利用者用のお知らせ。',file:'admin-notices.html'},
+   {title:'恋愛相談への回答',description:'守秘確認のうえ、非公開で回答します。',file:'admin-counsel.html'},
    {title:'フィードバック',description:'新着・対応状況・保管の管理。',file:'admin-feedback.html'},
    {title:'公開デッキと通報',description:'利用者の公開内容を確認。',file:'admin-community.html'},
    {title:'管理者のつぶやき',description:'写真付きのお知らせを投稿。',file:'admin-updates.html'},

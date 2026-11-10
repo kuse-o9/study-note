@@ -1,26 +1,26 @@
-# 外部認証の設定待ち
+# 無料のGoogleログイン・CAPTCHA接続手順（2026-11-10）
 
-2026-11-01。現在のメールアドレス＋パスワードと管理者専用の追加認証は維持する。確認できていない認証機能を有効化して、利用者やオーナーを締め出さない。
+現在のメール＋パスワードと管理者専用認証を維持する。Googleは公開Auth設定で無効。CAPTCHAの設定は公開項目だけでは確認できず、キー未取得のため、こちらから勝手に有効化しない。
 
-## Googleログイン
+## Google
 
-公開Auth設定の`external.google`はfalseだった。Google側のOAuthクライアント、同意画面、SupabaseのGoogleプロバイダー設定が必要。GoogleのクライアントシークレットをGitHubや画面側に書かない。
+Google側のOAuthクライアントと同意画面を作り、Supabase AuthのGoogleプロバイダーにclient IDとsecretを登録する。課金サービス・有料APIは使わない。秘密情報はGitHubに貼らない。
 
-Google側の認証コールバックと、アプリへ戻るURLは別：
+- GoogleからSupabaseへのコールバック：`https://zlefzpbrbvniijmohpao.supabase.co/auth/v1/callback`
+- Supabaseからアプリへの許可済み戻り先：`https://kuse-o9.github.io/study-note/account.html`
+- フロントは実際のAuth設定がGoogle有効の場合だけGoogleボタンを表示する。
+- 確認済みの同じメールの自動関連付けはSupabase側で行う。クライアント側でユーザーIDや役割を合成しない。別メールの既存アカウントを勝手に統合しない。
+- 新規のGoogleアカウントも拡張機能は未追加。管理者やオーナーには自動昇格しない。
 
-- GoogleからSupabaseへ戻るコールバック：`https://zlefzpbrbvniijmohpao.supabase.co/auth/v1/callback`
-- Supabaseからアプリへ戻るページ：`https://kuse-o9.github.io/knowledge-construction/account.html`
+## Turnstile
 
-設定後にフロント側のGoogleログイン導線、リダイレクト許可、既存アカウントとの関連付け、確認メール、BAN・削除・メンテナンス・管理者追加認証を検査してから完了とする。プロバイダーが無効のまま壊れたボタンだけを公開しない。
+無料のCloudflare Turnstileサイトを本人が作成し、実際の公開ホスト名を登録する。サイトキーは公開用、secretはSupabase Auth側だけに設定する。
 
-## CAPTCHA
+1. `auth-options.json` のcaptcha.siteKeyに公開サイトキー、enabledにtrueを設定してフロントを公開する。
+2. ログイン・登録・パスワード再設定・管理者のパスワード再確認・本人削除で、確認画面とトークンの受け渡しを検証する。
+3. Supabase AuthのBot and Abuse ProtectionでTurnstileのsecretを設定してCAPTCHAを有効化する。
+4. 確認に通った操作の成功と、トークンなし／無効トークンでの拒否を、本番の専用テスト用アカウントで確認する。検査のために一般利用者のアカウントを削除しない。
 
-サイトキー・シークレットキー・Supabase側の有効化設定は未確認。公開Auth設定にCAPTCHA欄がないことだけで「無効」と断定しない。提供元でのキー作成と管理側設定が必要。利用するなら追加課金のない設定だけを選び、利用条件への同意や新しい認証情報の設定は本人の確認を通す。
+ウィジェットを置いただけで保護完了とは扱わない。外部設定を有効化する前に、オーナーがログイン中の別タブを残して復旧手段を確保する。キーやsecretをチャットに貼らない。
 
-シークレットキーはSupabase Auth側だけに設定し、ブラウザーに出すのは公開用サイトキーだけ。登録・ログイン・パスワード再設定、およびパスワード再確認を使う操作にも`captchaToken`の受け渡しが必要になるため、ウィジェットを置くだけで完了としない。人の確認が必要なCAPTCHAを勝手に解いたことにもしていない。
-
-現在の認証経路と荒らし対策を弱めず、設定がそろってから実装・通し確認を行う。有料の漏えい済みパスワード照合やAIサービスへの変更は行わない。
-
-一次資料：
-- https://supabase.com/docs/guides/auth/social-login/auth-google
-- https://supabase.com/docs/guides/auth/auth-captcha
+参照：Supabase公式Google認証・Identity Linking・Auth CAPTCHAの説明。
