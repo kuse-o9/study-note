@@ -17,6 +17,7 @@
  const menus=[];
  function group(title,tone,entries){const details=document.createElement('details');details.className='sn-nav-menu';details.dataset.tone=tone;const summary=document.createElement('summary');summary.append(icon(tone),document.createTextNode(title));const panel=document.createElement('div');panel.className='sn-menu-panel';for(const [label,href]of entries)panel.append(link(label,href,tone));if(panel.querySelector('[aria-current="page"]'))details.classList.add('sn-current-group');details.append(summary,panel);details.addEventListener('toggle',()=>{if(details.open)for(const other of menus)if(other!==details)other.open=false;});menus.push(details);nav.append(details);return panel;}
  for(const definition of definitions)group(...definition);
+ group('アプリ・設定','account',[['アプリマーケット','app-market.html'],['集中モード','focus.html'],['家族の設定','family.html']]);
  nav.append(link('アカウント','account.html','account'));
  const extras=group('管理・ヘルプ','admin',[['管理者ページ','admin.html'],['フィードバック','feedback.html']]);if(/^admin(?:-|\.html)/.test(page))extras.closest('details').classList.add('sn-current-group');
  // Keep page-specific links and nodes (including IDs/listeners) rather than discarding them.

@@ -1,5 +1,6 @@
 'use strict';
 import {parseSRT,writeSRT,clipAppearance,validateEnhancements,parseProject} from './studio-features.js?v=validate2';
+if(await window.StudyApps.require('editor')){
 const $=id=>document.getElementById(id),canvas=$('canvas'),ctx=canvas.getContext('2d');
 let assets=[],clips=[],selected,time=0,playing=false,exporting=false,raf,previous=0,undo=[],redo=[],activeRecorder=null,cancelledExport=false,tab='media',ac,mix;
 const uid=()=>crypto.randomUUID(),note=s=>$('status').textContent=s,end=()=>Math.max(0,...clips.map(c=>c.start+c.duration)),fmt=t=>`${String(Math.floor(t/60)).padStart(2,'0')}:${String(Math.floor(t%60)).padStart(2,'0')}`;
@@ -53,3 +54,6 @@ $('subtitle-import').onchange=async e=>{if(exporting)return;try{const rows=parse
 $('subtitle-save').onclick=()=>download(new Blob([writeSRT(clips)],{type:'text/plain;charset=utf-8'}),$('name').value+'.srt');
 $('cancel-export').onclick=()=>{if(activeRecorder&&activeRecorder.state!=='inactive'){cancelledExport=true;activeRecorder.stop();}};
 addEventListener('pagehide',()=>{stop();for(const a of assets)URL.revokeObjectURL(a.url);ac?.close();});addEventListener('keydown',e=>{if(/INPUT|TEXTAREA|SELECT/.test(e.target.tagName)||exporting)return;if(e.code==='Space'){e.preventDefault();play().catch(e=>note(e.message));}});library();draw();
+
+window.addEventListener('study-app-policy',e=>{if(!e.detail.editor){stop();if(exporting)$('cancel-export').click();}});
+}

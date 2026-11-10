@@ -11,6 +11,7 @@
  const stored=read();if(stored)state=stored;
  function save(){state.owner=pageId;try{localStorage.setItem(KEY,JSON.stringify(state));storageError=false;}catch{storageError=true;$('timer-message').textContent='状態を保存できません。このタブを開いている間は使えます。';}}
  const duration=()=>{if(state.mode==='stopwatch')return MAX;const k=state.mode==='countdown'?'countdown':state.phase;return (state.config[k]*60+state.config[k+'Seconds'])*1000;};
+ window.addEventListener('study-app-policy',e=>{if(!e.detail.timer&&state.startedAt!==null){state.elapsed=elapsed();state.startedAt=null;save();}});
  function elapsed(now=Date.now()){return Math.min(MAX,state.elapsed+(state.startedAt===null?0:Math.max(0,now-state.startedAt)));}
  function clock(ms,countdown){const s=countdown?Math.ceil(ms/1000):Math.floor(ms/1000);return [Math.floor(s/3600),Math.floor(s/60)%60,s%60].map(x=>String(x).padStart(2,'0')).join(':');}
  function hydrate(){for(const [id,k] of [['countdown-minutes','countdown'],['work-minutes','work'],['short-minutes','short'],['long-minutes','long'],['cycle-count','cycles'],...['countdown','work','short','long'].map(k=>[k+'-seconds',k+'Seconds'])])$(id).value=state.config[k];}

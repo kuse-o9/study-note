@@ -31,7 +31,7 @@
     @media(max-width:680px){#top{left:10px;right:10px;top:9px;align-items:flex-start}#brand{min-width:0;padding:9px 11px}#brand strong{font-size:14px}#brand small{font-size:10px}#inventory{gap:4px;padding:5px}.item{min-width:48px;padding:5px 5px;font-size:10px}.item b{font-size:14px}#topright .pill{padding:8px 10px;font-size:11px}#adminBtn{font-size:0;padding:8px 10px}#adminBtn::after{content:"🛡";font-size:14px}#tip{top:77px;font-size:10px;max-width:calc(100vw - 20px);white-space:normal;text-align:center;line-height:1.35}#bottom{left:10px;right:10px;bottom:10px;align-items:flex-end}#objective{font-size:10px;padding:9px 10px;max-width:46vw}#objective strong{font-size:11px}#actions{max-width:50vw;gap:5px}.action{font-size:11px;padding:9px 10px}#mobile{display:grid;bottom:90px;left:10px}#buildmenu{right:10px;bottom:82px;width:190px}#mapPanel{right:8px;top:56px;width:min(220px,58vw)}#toast{bottom:155px;font-size:12px}}
     @media(max-height:520px){#mobile{transform:scale(.78);transform-origin:bottom left;bottom:65px}#bottom{bottom:7px}#tip{top:67px}}
   </style>
-<link rel="stylesheet" href="../game-clarity.css?v=20261110ui"></head>
+<link rel="stylesheet" href="../game-clarity.css?v=20261110ui"><link rel="stylesheet" href="../app-controls.css?v=20261110apps"><script src="../app-controls.js?v=20261110apps"></script></head>
 <body class="sn-island">
   <div id="game"></div>
   <header id="top">
@@ -78,6 +78,7 @@
   <script type="module">
     import * as THREE from 'three';
     import { installGameSaveBridge } from './game-save-bridge.js';
+    if(await window.StudyApps.require('games')){
 
     if (window.Study?.client) {
       installGameSaveBridge(window.Study.client, () => {
@@ -369,6 +370,7 @@
     renderer.domElement.addEventListener('webglcontextrestored',()=>{if(islandRendererDisposed)return;const b=document.getElementById('island-gpu-resume');if(b)b.hidden=false;});
     // A temporary loss keeps the renderer restorable. Only terminal page exit
     // destroys renderer-owned shadow targets and the already-owned GL context.
+    window.addEventListener('study-app-policy',e=>{if(!e.detail.games){active=false;keys.clear();}});
     function releaseIslandRenderer(event){if(event?.persisted||islandRendererDisposed)return;islandRendererDisposed=true;gpuStopped=true;active=false;keys.clear();let gl;try{gl=renderer.getContext();}catch{}try{sun.shadow.dispose();}catch{}try{renderer.dispose();}catch{}try{if(gl&&!gl.isContextLost())gl.getExtension('WEBGL_lose_context')?.loseContext();}catch{}}
     globalThis.addEventListener?.('pagehide',releaseIslandRenderer);
     function animate(){
@@ -391,6 +393,8 @@
       sun.position.set(player.position.x-12,player.position.y+24,player.position.z+9);sun.target.position.set(player.position.x,player.position.y,player.position.z);sun.target.updateMatrixWorld();waterline.rotation.y+=dt*.002;drawMap();try{renderer.render(scene,camera);}catch(error){pauseIslandGraphics(error.message);}
     }
     window.gameBootReady();animate();addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(innerWidth,innerHeight);});
-  </script>
-<script src="../config.js"></script><script src="../game-publication.js?v=security1"></script></body>
+  
+    }
+</script>
+<script src="../config.js"></script><script src="../game-publication.js?v=20261110apps"></script></body>
 </html>

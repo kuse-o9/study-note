@@ -94,7 +94,7 @@ footer{font-size:14px;color:#627188;margin-top:24px}
   .cover{height:110px}
 }
 </style>
-<link rel="stylesheet" href="study-access.css"><script src="study-access.js"></script><link rel="stylesheet" href="study-tools.css?v=1"><link rel="stylesheet" href="study-design.css?v=20261110ui"><script defer src="study-navigation.js?v=20261110ui"></script></head>
+<link rel="stylesheet" href="study-access.css"><script src="study-access.js"></script><link rel="stylesheet" href="study-tools.css?v=1"><link rel="stylesheet" href="study-design.css?v=20261110ui"><script defer src="study-navigation.js?v=20261110apps"></script><link rel="stylesheet" href="app-controls.css?v=20261110apps"><script src="app-controls.js?v=20261110apps"></script></head>
 
 <body class="sn-app sn-home">
 <header>
@@ -136,6 +136,7 @@ footer{font-size:14px;color:#627188;margin-top:24px}
 <div id="study-game-room-overlay" hidden style="position:fixed;inset:0;z-index:10000;background:#f5f3ed"><iframe id="study-game-room-frame" title="ゲームの部屋" style="display:block;width:100%;height:100%;border:0"></iframe></div>
 <script>
 (()=>{'use strict';const button=document.getElementById('game-room-launch'),overlay=document.getElementById('study-game-room-overlay'),frame=document.getElementById('study-game-room-frame');let oldOverflow='',returnFocus=null;
+window.addEventListener('study-app-policy',e=>{if(!e.detail.games)closeRoom();});
 function closeRoom(){if(overlay.hidden)return;overlay.hidden=true;document.body.style.overflow=oldOverflow;frame.removeAttribute('src');frame.removeAttribute('srcdoc');if(location.hash==='#game-room')history.replaceState(null,'',location.pathname+location.search+'#home');const focusTarget=returnFocus?.isConnected&&returnFocus.getClientRects().length?returnFocus:document.querySelector('.sn-home-actions a')||button;focusTarget.focus();}
 button.addEventListener('click',e=>{e.preventDefault();if(!overlay.hidden)return;returnFocus=document.activeElement;oldOverflow=document.body.style.overflow;frame.removeAttribute('srcdoc');frame.src=new URL('game-room/embedded-room.html?v=readable1',location.href).href;overlay.hidden=false;document.body.style.overflow='hidden';frame.focus();});
 window.addEventListener('message',e=>{if(e.source===frame.contentWindow&&e.origin===location.origin&&e.data?.type==='study-game-room-close')closeRoom();});
@@ -145,5 +146,5 @@ window.addEventListener('hashchange',syncRoomRoute);
 syncRoomRoute();
 })();
 </script>
-<script src="config.js"></script><script src="game-publication.js?v=security1"></script><script src="config.js"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.102.0"></script><script src="study-client.js?v=deadline1"></script><script src="study-comfort.js?v=2"></script><script src="install-app.js?v=1"></script><script src="feedback-updates.js?v=1"></script></body>
+<script src="config.js"></script><script src="game-publication.js?v=20261110apps"></script><script src="config.js"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.102.0"></script><script src="study-client.js?v=deadline1"></script><script src="study-comfort.js?v=20261110apps"></script><script src="install-app.js?v=1"></script><script src="feedback-updates.js?v=1"></script></body>
 </html>

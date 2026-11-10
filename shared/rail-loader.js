@@ -25,7 +25,8 @@
  if(html.includes(readingMarker))html=html.replace(readingMarker,"let spoken=text;if(language.startsWith('ja'))spoken=spoken.replace(/([0-9０-９一二三四五六七八九十百]+)号車/g,'$1ごうしゃ');if(language.startsWith('ja'))for(const [name,reading]of Object.entries(readings)");
  const marker='<script>/* BAYLINE shared signal model',a=html.indexOf(marker);if(a<0)throw Error('共通処理の版を確認できませんでした。');const b=html.indexOf('</script>',a);html=html.slice(0,a)+'<script src="shared/rail-scene-shared.js?v=compare9"></script>'+html.slice(b+9);
  const last=html.lastIndexOf('<script>'),end=html.indexOf('</script>',last);if(last<0||!html.slice(last,end).includes('function modelGeometry'))throw Error('運転処理の版を確認できませんでした。');
- html=html.slice(0,last)+'<script src="shared/rail-scene-start.js?v=compare9"></script><script src="shared/rail-asset-store.js?v=bounded1"></script><script src="shared/rail-mesh-cache.js"></script><script src="shared/rail-recovery.js?v=compare9"></script><script src="'+options.driver+'?v=bounded1"></script>'+html.slice(end+9);
+ html=html.slice(0,last)+'<script src="shared/rail-scene-start.js?v=compare9"></script><script src="shared/rail-asset-store.js?v=bounded1"></script><script src="shared/rail-mesh-cache.js"></script><script src="shared/rail-recovery.js?v=compare9"></script><script src="'+options.driver+'?v=20261110apps"></script>'+html.slice(end+9);
+ html=html.replace('</head>','<link rel="stylesheet" href="app-controls.css?v=20261110apps"><script src="app-controls.js?v=20261110apps"></script></head>').replaceAll('game-publication.js?v=security1','game-publication.js?v=20261110apps');
  document.open();document.write(html);document.close();
  }catch(error){status.textContent=(error.message||'読み込めませんでした。')+' 下のボタンから再試行できます。';status.setAttribute('role','alert');retry.hidden=false;}finally{busy=false;retry.disabled=false;}}
  retry.onclick=()=>void load();await load();})();
