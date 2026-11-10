@@ -1,4 +1,4 @@
-import{validateCamera}from'./studio-cameras.js?v=20261111proxy2';
+import{validateCamera}from'./studio-cameras.js?v=20261111proxy3';
 // Pure, bounded timeline and SDR processing math. No network, credentials, or evaluation of code.
 const finite=(x,min,max)=>typeof x==='number'&&Number.isFinite(x)&&x>=min&&x<=max;
 export function speedAt(c,t){const a=c.rateCurve;if(!a?.length)return c.speed||1;if(t<=a[0].time)return a[0].speed;for(let i=1;i<a.length;i++)if(t<=a[i].time){const p=a[i-1],q=a[i],u=(t-p.time)/(q.time-p.time);return p.speed+(q.speed-p.speed)*u;}return a.at(-1).speed;}

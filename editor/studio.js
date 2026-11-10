@@ -1,9 +1,9 @@
-import{cameraVisible,cameraPlan}from'./studio-cameras.js?v=20261111proxy2';
+import{cameraVisible,cameraPlan}from'./studio-cameras.js?v=20261111proxy3';
 'use strict';
-import {parseSRT,writeSRT,clipAppearance,validateEnhancements,parseProject} from './studio-features.js?v=20261111proxy2';
-import {sourceOffset,speedAt,trimClip,parseVTT,writeVTT,validateAdvanced} from './studio-math.js?v=20261111proxy2';
-import {readDraft,writeDraft,removeDraft} from './studio-persistence.js?v=20261111proxy2';
-import {installTools} from './studio-tools.js?v=20261111proxy2';
+import {parseSRT,writeSRT,clipAppearance,validateEnhancements,parseProject} from './studio-features.js?v=20261111proxy3';
+import {sourceOffset,speedAt,trimClip,parseVTT,writeVTT,validateAdvanced} from './studio-math.js?v=20261111proxy3';
+import {readDraft,writeDraft,removeDraft} from './studio-persistence.js?v=20261111proxy3';
+import {installTools} from './studio-tools.js?v=20261111proxy3';
 if(await window.StudyApps.require('editor')){
 const $=id=>document.getElementById(id),canvas=$('canvas'),ctx=canvas.getContext('2d');
 let assets=[],clips=[],selected,time=0,playing=false,exporting=false,raf,previous=0,undo=[],redo=[],activeRecorder=null,cancelledExport=false,tab='media',ac,mix;
