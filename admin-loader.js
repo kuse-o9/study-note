@@ -17,7 +17,7 @@ else {
     if(view==='owner'&&!data.owner)throw Error('この画面はオーナー専用です。');
     const script=sections.prepareScript(data.script,view);sections.mount(root,data,view);
     const url=URL.createObjectURL(new Blob([window.StudyAdminHistory?.withIds(script)||script],{type:'text/javascript'}));
-    try{const module=await import(url);if(ticket===generation){await module.default(root,data,message);if(ticket===generation){if(view==='decks')window.StudyDeckInput?.attach(root);if(view==='history'){window.StudyAdminHistory?.attach(root);const panel=root.querySelector('#history-panel');if(panel?.hidden)panel.previousElementSibling?.click();}}}}finally{URL.revokeObjectURL(url);}
+    try{const module=await import(url);if(ticket===generation){await module.default(root,data,message);if(ticket===generation){if(view==='owner')await window.StudyOwnerManagement?.mount(root,data);if(view==='decks')window.StudyDeckInput?.attach(root);if(view==='history'){window.StudyAdminHistory?.attach(root);const panel=root.querySelector('#history-panel');if(panel?.hidden)panel.previousElementSibling?.click();}}}}finally{URL.revokeObjectURL(url);}
    }
   }
  }catch(e){if(ticket===generation){root.replaceChildren();message.textContent=e.message;message.classList.add('error');}}

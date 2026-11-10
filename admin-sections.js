@@ -13,6 +13,7 @@
  function prepareScript(source,view){
   const config=views[view];if(!config)throw Error('管理機能の表示先を確認してください。');
   let script=source;
+  script=script.replace("u.owner?'オーナー'","u.supremeOwner?'最高オーナー':u.owner?'オーナー'");
   function replaceOne(marker,replacement){if(typeof script!=='string'||script.split(marker).length!==2)throw Error('管理画面の構成が更新されています。再読み込みしても続く場合は、オーナーにお知らせください。');script=script.replace(marker,replacement);}
   // Do not fetch hidden lists on an unrelated screen. Every real action still uses Study.api.
   for(const name of ['decks','accounts','history','requests','accountRequests']){const marker='async function '+name+'(){';replaceOne(marker,marker+(config.load.includes(name)?'':'return;'));}
@@ -53,7 +54,7 @@
    {title:'共有BGM',description:'音楽の追加・保管・再公開。',file:'admin-music.html'},
    {title:'ゲームの公開設定',description:'公開・非公開、お知らせを管理。',file:'admin-games.html'}
   ]);
-  const count=document.createElement('p');count.className='sn-admin-summary';count.textContent='登録アカウント '+info.accounts+'人 ／ 管理者 '+info.admins+'人'+(info.owner?' ／ オーナー':'');root.replaceChildren(count,dashboard);
+  const count=document.createElement('p');count.className='sn-admin-summary';count.textContent='登録アカウント '+info.accounts+'人 ／ 管理者 '+info.admins+'人'+(info.supremeOwner?' ／ 最高オーナー':info.owner?' ／ オーナー':'');root.replaceChildren(count,dashboard);
  }
  const api={views,selected,prepareScript,mount,dashboard};if(typeof module==='object'&&module.exports)module.exports=api;else g.StudyAdminSections=api;
 })(globalThis);
