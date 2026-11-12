@@ -1,0 +1,121 @@
+{
+  "id": "tokaido-tokyo-atami-local",
+  "service": "普通",
+  "references": [
+    {
+      "type": "stop-pattern",
+      "url": "https://timetables.jreast.co.jp/2611/train/020/023711.html"
+    },
+    {
+      "type": "rolling-stock-family",
+      "url": "https://www.jreast.co.jp/train/local/e233.html"
+    }
+  ],
+  "stations": [
+    {
+      "id": "tokyo",
+      "name": "東京",
+      "english": "Tokyo"
+    },
+    {
+      "id": "shimbashi",
+      "name": "新橋",
+      "english": "Shimbashi"
+    },
+    {
+      "id": "shinagawa",
+      "name": "品川",
+      "english": "Shinagawa"
+    },
+    {
+      "id": "kawasaki",
+      "name": "川崎",
+      "english": "Kawasaki"
+    },
+    {
+      "id": "yokohama",
+      "name": "横浜",
+      "english": "Yokohama"
+    },
+    {
+      "id": "totsuka",
+      "name": "戸塚",
+      "english": "Totsuka"
+    },
+    {
+      "id": "ofuna",
+      "name": "大船",
+      "english": "Ofuna"
+    },
+    {
+      "id": "fujisawa",
+      "name": "藤沢",
+      "english": "Fujisawa"
+    },
+    {
+      "id": "tsujido",
+      "name": "辻堂",
+      "english": "Tsujido"
+    },
+    {
+      "id": "chigasaki",
+      "name": "茅ケ崎",
+      "english": "Chigasaki"
+    },
+    {
+      "id": "hiratsuka",
+      "name": "平塚",
+      "english": "Hiratsuka"
+    },
+    {
+      "id": "oiso",
+      "name": "大磯",
+      "english": "Oiso"
+    },
+    {
+      "id": "ninomiya",
+      "name": "二宮",
+      "english": "Ninomiya"
+    },
+    {
+      "id": "kozu",
+      "name": "国府津",
+      "english": "Kozu"
+    },
+    {
+      "id": "kamonomiya",
+      "name": "鴨宮",
+      "english": "Kamonomiya"
+    },
+    {
+      "id": "odawara",
+      "name": "小田原",
+      "english": "Odawara"
+    },
+    {
+      "id": "hayakawa",
+      "name": "早川",
+      "english": "Hayakawa"
+    },
+    {
+      "id": "nebukawa",
+      "name": "根府川",
+      "english": "Nebukawa"
+    },
+    {
+      "id": "manazuru",
+      "name": "真鶴",
+      "english": "Manazuru"
+    },
+    {
+      "id": "yugawara",
+      "name": "湯河原",
+      "english": "Yugawara"
+    },
+    {
+      "id": "atami",
+      "name": "熱海",
+      "english": "Atami"
+    }
+  ]
+}
