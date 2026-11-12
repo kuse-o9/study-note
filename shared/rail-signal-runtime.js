@@ -30,19 +30,24 @@ function aspect(geo,index,traffic,player,exclude,precomputed){
  const next=index+1<blocks.length?index+1:loop?0:-1;
  return occupied.has(next)?'YELLOW':'GREEN';
 }
+// Signal starts are ordered. Skip passed blocks without scanning the route.
+function firstAhead(blocks,d,tolerance){
+ let lo=0,hi=blocks.length;
+ while(lo<hi){const mid=(lo+hi)>>1;if(blocks[mid].start-d<tolerance)lo=mid+1;else hi=mid;}
+ return lo;
+}
 function control(geo,traffic,train,player){
  const {blocks,loop}=layout(geo),L=geo.length,d=train.distance;let next=null,stop=Infinity;
  const occupied=S.occupiedBlocks(blocks,trainViews(geo,traffic,player,train.id||'player'));
  if(g.BaylineJunctions?.blockedInside(traffic,geo,train))stop=0;
- for(let i=0;i<blocks.length;i++){
+ for(let i=loop?0:firstAhead(blocks,d,-.05);i<blocks.length;i++){
   let ahead=blocks[i].start-d;
   if(loop)ahead=wrap(ahead,L);
   if(ahead<-.05)continue;
   const color=aspect(geo,i,traffic,player,train.id||'player',occupied);
   if(!next||ahead<next.distance)next={index:i,distance:Math.max(0,ahead),aspect:color};
-  if(color==='RED')stop=Math.min(stop,Math.max(0,ahead-5));
+  if(color==='RED'){stop=Math.min(stop,Math.max(0,ahead-5));if(!loop)break;}
  }
- const current=S.blockAt(blocks,Math.min(L,Math.max(0,d)));
  // Occupancy appearing in the train's own block also enforces separation.
  const gap=clearance(geo,traffic,train,player);
  return {next,stopDistance:Math.min(stop,Math.max(0,gap-45)),limit:next?.aspect==='YELLOW'&&next.distance<800?45:Infinity};
@@ -68,9 +73,10 @@ const pools=new WeakMap();
 function render(viewer,Ces,geos,traffic,player,frameAt){
  if(!viewer||!traffic)return;bind(geos);const geo=geos[player.direction],{blocks,loop}=layout(geo),L=geo.length;
  let pool=pools.get(viewer);if(!pool){pool=new Map();pools.set(viewer,pool);}
- const wanted=new Set();
- for(let i=0;i<blocks.length;i++){
+ const wanted=new Set();let occupancy;
+ for(let i=loop?0:firstAhead(blocks,player.distance,-300);i<blocks.length;i++){
   const distance=blocks[i].start;let ahead=distance-player.distance;if(loop)ahead=wrap(ahead+300,L)-300;
+  if(!loop&&ahead>1500)break;
   if(ahead< -300||ahead>1500)continue;
   const id=player.direction+':'+i;wanted.add(id);let item=pool.get(id);
   if(!item){
@@ -83,7 +89,8 @@ function render(viewer,Ces,geos,traffic,player,frameAt){
    for(const [color,height]of [['GREEN',4.43],['YELLOW',3.9],['RED',3.37]]){const lamp=viewer.entities.add({name:id+' '+color,position:point(height,-.16),orientation,ellipsoid:{radii:new Ces.Cartesian3(.055,.20,.20),material:Ces.Color.fromCssColorString('#263031')}});entities.push(lamp);lamps[color]=lamp;}
    item={entities,lamps,color:null};pool.set(id,item);
   }
-  const color=aspect(geo,i,traffic,player,null);if(color!==item.color){item.color=color;for(const [name,lamp]of Object.entries(item.lamps))lamp.ellipsoid.material=Ces.Color.fromCssColorString(name===color?{RED:'#ff3434',YELLOW:'#ffce39',GREEN:'#37f276'}[name]:'#263031');}
+  occupancy??=S.occupiedBlocks(blocks,trainViews(geo,traffic,player,null));
+  const color=aspect(geo,i,traffic,player,null,occupancy);if(color!==item.color){item.color=color;for(const [name,lamp]of Object.entries(item.lamps))lamp.ellipsoid.material=Ces.Color.fromCssColorString(name===color?{RED:'#ff3434',YELLOW:'#ffce39',GREEN:'#37f276'}[name]:'#263031');}
  }
  for(const [id,item]of pool)if(!wanted.has(id)){for(const e of item.entities)viewer.entities.remove(e);pool.delete(id);}
 }
