@@ -11,6 +11,7 @@
  function clear(){clearTimeout(burstTimer);if($('points-celebration'))$('points-celebration').hidden=true;wallet=null;data=null;lastFailure=null;purchase=null;render();window.dispatchEvent(new Event('study-points-change'));}
  function render(){
   progressView();
+  if($('home-login-streak'))$('home-login-streak').textContent='連続ログイン '+(data?.progress?.login_streak??'—')+' 日';
   if($('points-balance'))$('points-balance').textContent=wallet?wallet.balance+' pt':'— pt';
   if($('points-today'))$('points-today').textContent=data?'今日 '+data.today+' / '+data.daily_limit+'枚 ・ ブースター残り '+wallet.booster+'枚':actor?'ポイントを読み込んでいます…':'ログインするとポイントを貯められます。';
   if($('points-earned'))$('points-earned').textContent=wallet?'これまで獲得：'+wallet.earned+' pt':'';

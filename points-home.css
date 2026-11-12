@@ -1,0 +1,4 @@
+.home-score { display:flex; align-items:center; flex-wrap:wrap; gap:.6rem 1rem; margin:1rem 0; padding:.85rem 1rem; background:#eef5ff; color:#102b52; border:1px solid #c1d4f0; border-radius:14px; }
+.home-score [role=status] { display:flex; flex-wrap:wrap; gap:.5rem 1rem; }
+.home-score .btn { margin-inline-start:auto; }
+@media(max-width:560px) { .home-score .btn { margin-inline-start:0; } }
