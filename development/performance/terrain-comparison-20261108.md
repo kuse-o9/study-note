@@ -1,9 +1,0 @@
-# 地形GPU処理の比較専用画面
-
-rail-gpu-check.htmlから8路線、normal/no-clipping/no-terrain-entitiesを選べる。1タブ内で起動し同時コンテキストを増やさない。許可リスト外の値は通常描画。通常URLには変更なし。テスト時だけ黄色の説明を表示し、通常版に戻るボタンはrailGpuTestだけを除去する。テスト設定を永続化せず、既存の運転保存はそのまま。地形切抜き無効は線路を覆う地形、床壁照明無効は穴等を意図的に露出するため運転用の代替機能とは扱わない。
-
-no-clippingは同じCPU側のポリゴン計算・床壁照明を保持し、ClippingPolygonCollectionをGlobeへ割り当てない。登録されないcollectionはdisposeで明示破棄する。no-terrain-entitiesは同じCPU側座標・mask計算を保ち、地形関係の床壁屋根照明Entityのaddだけを行わない。線路・車両・信号・通常画質設定は維持。個別切替の結果だけでTDRやVRAM不足を断定しない。
-
-診断JSONはrenderTestとbuildRevision=terrain-compare-1を追加。URL等を出力せず、既存履歴と上限を保持。
-
-検証：36窓のdefault/explicit normal/unknown modeは同一。no-clippingの床壁照明はnormalと一致し、Globeへの登録なし・破棄一度を確認。no-terrain-entitiesのmask unionはnormalと一致。8路線×3ボタンが既存の同一オリジンパスへ1タブで遷移し不正選択を拒否することをVMで検査。既存terrain-entity-batch、recovery-lifecycle、scene-diagnostics検査通過。物理GPUでの比較結果は未取得。原因やクラッシュ解消の確定ではなく、実機の限定的な比較に使う道具。
