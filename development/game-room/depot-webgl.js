@@ -19,14 +19,14 @@
   const TRACKS=[-22,-15,-8,-1,6,13,20];
   const SOURCE_X={yamanote:-20,yurikamome:-12,keihin:-4,chuo:4,sobu:12,sobuRapid:20,azusa:-12,kaiji:-12};
   const EXPRESS_Z={azusa:18.965,kaiji:-4.035};
-  const trackX=(path,floor=current)=>floor.floor===23?0:LINE[path][1];
+  const trackX=(path,floor=current)=>floor.trackStyle==='agt'?0:LINE[path][1];
   function launch(path){const href=new URL(path,BASE).href;if(new URL(location.href).searchParams.get('embed')==='1')top.location.href=href;else location.href=href;}
   let gl, program, floors, model, current, geometry, dragging, moving = false, lost = false, gpuReady = false, disposed = false;
   let yaw = 0, pitch = 0, distance = 4.5, frame = 0, hovered = null;
   const player={x:-19.3,y:0,z:24.8,angle:Math.PI,walk:0}, keys=new Set();
   let lastTick=0, avatarBuffer, avatarCount=0,liftBuffer,liftScene=null,avatarKey=null,liftKey=null,liftMesh=null,locations;
   const FOV=48*Math.PI/180;
-  const tracks=()=>current?.floor===23?[0]:TRACKS;
+  const tracks=()=>current?.trackStyle==='agt'?[0]:TRACKS;
   function surface(x,z) {
     for(const track of tracks()) if(Math.abs(x-(track+2.7))<=.8) {
       if(z>=-33.5&&z<=21.5)return .94;
@@ -144,7 +144,7 @@
       box(faces,0,11.5,z,53,.55,.65,'#c6cdbf');
       for(const x of [-17,0,17]) box(faces,x,11.17,z,10,.08,.16,'#f3efc4');
     }
-    const agt=floor.floor===23;
+    const agt=floor.trackStyle==='agt';
     const tracks=agt?[0]:TRACKS;
     for(const x of tracks) {
       if(agt) {
@@ -295,7 +295,7 @@
   function display(floor) {
     current=floor; elevation=(floor.floor-1)*14;
     if(gpuReady&&!lost)geometry=floorGeometry(floor);
-    stopWalking();player.x=floor.floor===23?2.7:-19.3;player.y=0;player.z=24.8;player.angle=Math.PI;
+    stopWalking();player.x=floor.trackStyle==='agt'?2.7:-19.3;player.y=0;player.z=24.8;player.angle=Math.PI;
     $('floor').value=floor.floor;$('floor-number').textContent=floor.floor+'F';$('scene-title').textContent=floor.operator;
     $('train-count').textContent=floor.trains.length?floor.trains.length+'編成 待機中':'車両は準備中・基地見学';
     $('route-count').textContent=floor.trains.length+'路線';$('routes').replaceChildren();
@@ -359,7 +359,7 @@
     const button=$(id);button.addEventListener('pointerdown',e=>{e.preventDefault();if(moving||!gpuReady||lost)return;button.setPointerCapture(e.pointerId);const idle=!keys.size;keys.add(key);if(idle)requestAnimationFrame(tick);});
     for(const type of ['pointerup','pointercancel','lostpointercapture'])button.addEventListener(type,()=>keys.delete(key));
   }
-  $('reset').onclick=()=>{stopWalking();yaw=0;pitch=0;distance=4.5;player.x=current.floor===23?2.7:-19.3;player.y=0;player.z=24.8;highlight(null);schedule();canvas.focus();};
+  $('reset').onclick=()=>{stopWalking();yaw=0;pitch=0;distance=4.5;player.x=current.trackStyle==='agt'?2.7:-19.3;player.y=0;player.z=24.8;highlight(null);schedule();canvas.focus();};
   $('floor').onchange=()=>travel($('floor').value);
   $('up').onclick=()=>travel(current.floor+1);$('down').onclick=()=>travel(current.floor-1);
   addEventListener('resize',schedule);const resizeObserver=new ResizeObserver(schedule);resizeObserver.observe(canvas);
@@ -411,10 +411,10 @@
   });
   try {
     const read=async path=>{const r=await fetch(new URL(path,BASE));if(!r.ok)throw Error(path);return r.json();};
-    let express;[floors,model,express]=await Promise.all([read('development/game-room/operator-floors.json?v=express1').then(d=>d.floors),read('development/game-room/depot-model.json'),read('development/game-room/depot-express-faces.json?v=express1')]);if(disposed)return;model.faces.push(...express.faces);
+    let express;[floors,model,express]=await Promise.all([read('development/game-room/operator-floors.json?v=occupied1').then(d=>d.floors),read('development/game-room/depot-model.json'),read('development/game-room/depot-express-faces.json?v=express1')]);if(disposed)return;model.faces.push(...express.faces);
     for(const f of floors){const option=document.createElement('option');option.value=f.floor;option.textContent=f.floor+'F　'+f.operator;$('floor').append(option);}
     // Keep accessible route links usable even if GPU initialization fails.
-    current=floors.find(f=>f.floor===18);
+    current=floors[0];
     retry3D();
   }catch(e){loadingError('車両基地を読み込めませんでした。全フロアの路線一覧から出発できます。');console.error(e);}
 })();
